@@ -1,0 +1,119 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1180 415" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="1180" height="415" fill="#ffffff"/>
+<text x="16" y="32" font-size="21" font-weight="700" fill="#1a1a1a">OP-001 Commodity Intrusion Chain &#8212; Master Timeline</text>
+<text x="16" y="52" font-size="11.5" fill="#555">run op001-72786b04 &#183; 2026-09-22/23 &#183; target WIN11-PB026 (10.10.2.8) as PB026-Admin, paw hsgzsj &#183; assumed-breach, post-compromise</text>
+<rect x="16.0" y="67" width="15" height="15" rx="3" fill="#2b7bba"/>
+<text x="36.0" y="79" font-size="11.5" fill="#1a1a1a">Prevented</text>
+<rect x="113.0" y="67" width="15" height="15" rx="3" fill="#2e8b57"/>
+<text x="133.0" y="79" font-size="11.5" fill="#1a1a1a">Alerted</text>
+<rect x="196.0" y="67" width="15" height="15" rx="3" fill="#e0a800"/>
+<text x="216.0" y="79" font-size="11.5" fill="#1a1a1a">Logged-only</text>
+<rect x="307.0" y="67" width="15" height="15" rx="3" fill="#c0392b"/>
+<text x="327.0" y="79" font-size="11.5" fill="#1a1a1a">Missed</text>
+<text x="399.0" y="79" font-size="10.5" fill="#888">kill-chain order &#8594;</text>
+<rect x="16.0" y="108" width="156" height="46" rx="6" fill="#2b7bba"/>
+<text x="94.0" y="127" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Phase 1 &#183; Execution</text>
+<text x="94.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1059.001</text>
+<rect x="16.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="24.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="24.0" y="187.5" font-size="8.7" fill="#33373d">Sandcat delivery</text>
+<text x="24.0" y="201.0" font-size="8.7" fill="#33373d">op001-…-sandcat.exe</text>
+<text x="24.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="24.0" y="228.0" font-size="8.7" fill="#33373d">Defender 1116/1117</text>
+<text x="24.0" y="241.5" font-size="8.7" fill="#33373d">→ Wazuh 62123/62124</text>
+<text x="24.0" y="255.0" font-size="8.7" fill="#33373d">placement → 100606 L10</text>
+<text x="24.0" y="268.5" font-size="9.5" font-weight="700" fill="#2b7bba">PREVENTED</text>
+<text x="24.0" y="282.0" font-size="8.7" fill="#33373d">placement Logged-only,</text>
+<text x="24.0" y="295.5" font-size="8.7" fill="#33373d">buried in FP noise</text>
+<text x="176.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="180.0" y="108" width="156" height="46" rx="6" fill="#2e8b57"/>
+<text x="258.0" y="127" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Phase 2 &#183; Defense Evasion</text>
+<text x="258.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1562.001</text>
+<rect x="180.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="188.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="188.0" y="187.5" font-size="8.7" fill="#33373d">Set-MpPreference</text>
+<text x="188.0" y="201.0" font-size="8.7" fill="#33373d">DisableRealtime (…-evade)</text>
+<text x="188.0" y="214.5" font-size="8.7" fill="#33373d">13:32:21Z</text>
+<text x="188.0" y="228.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="188.0" y="241.5" font-size="8.7" fill="#33373d">Defender 5013 →</text>
+<text x="188.0" y="255.0" font-size="8.7" fill="#33373d">Wazuh 510142 L12</text>
+<text x="188.0" y="268.5" font-size="8.7" fill="#33373d">13:32:22Z</text>
+<text x="188.0" y="282.0" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED</text>
+<text x="188.0" y="295.5" font-size="8.7" fill="#33373d">+ control held (RTP on)</text>
+<text x="340.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="344.0" y="108" width="156" height="46" rx="6" fill="#2e8b57"/>
+<text x="422.0" y="127" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Phase 3 &#183; Command &amp; Control</text>
+<text x="422.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1071.001</text>
+<rect x="344.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="352.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="352.0" y="187.5" font-size="8.7" fill="#33373d">Sandcat beacon →</text>
+<text x="352.0" y="201.0" font-size="8.7" fill="#33373d">10.10.3.4:8888</text>
+<text x="352.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="352.0" y="228.0" font-size="8.7" fill="#33373d">Wazuh 510144 L12</text>
+<text x="352.0" y="241.5" font-size="8.7" fill="#33373d">(Sysmon Event 3)</text>
+<text x="352.0" y="255.0" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED</text>
+<text x="352.0" y="268.5" font-size="8.7" fill="#33373d">per-connection;</text>
+<text x="352.0" y="282.0" font-size="8.7" fill="#33373d">sustained-C2 gap</text>
+<text x="504.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="508.0" y="108" width="156" height="46" rx="6" fill="#2e8b57"/>
+<text x="586.0" y="127" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Phase 4 &#183; Discovery</text>
+<text x="586.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1082·57·33·18</text>
+<rect x="508.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="516.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="516.0" y="187.5" font-size="8.7" fill="#33373d">Caldera &#x27;OP-001</text>
+<text x="516.0" y="201.0" font-size="8.7" fill="#33373d">Discovery&#x27; (4 abilities)</text>
+<text x="516.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="516.0" y="228.0" font-size="8.7" fill="#33373d">100502 L13 PS-bypass</text>
+<text x="516.0" y="241.5" font-size="8.7" fill="#33373d">(sandcat-parented)</text>
+<text x="516.0" y="255.0" font-size="8.7" fill="#33373d">+92052 L4 +100112 L3</text>
+<text x="516.0" y="268.5" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED (method)</text>
+<text x="516.0" y="282.0" font-size="8.7" fill="#33373d">intent = Logged-only</text>
+<text x="668.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="672.0" y="108" width="156" height="46" rx="6" fill="#e0a800"/>
+<text x="750.0" y="127" font-size="10.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">Phase 5 &#183; Persistence</text>
+<text x="750.0" y="143" font-size="9.5" fill="#1a1a1a" text-anchor="middle">T1547.001</text>
+<rect x="672.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="680.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="680.0" y="187.5" font-size="8.7" fill="#33373d">HKCU Run key</text>
+<text x="680.0" y="201.0" font-size="8.7" fill="#33373d">…-persist (powershell</text>
+<text x="680.0" y="214.5" font-size="8.7" fill="#33373d">New-ItemProperty)</text>
+<text x="680.0" y="228.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="680.0" y="241.5" font-size="8.7" fill="#33373d">Sysmon 13 in archives,</text>
+<text x="680.0" y="255.0" font-size="8.7" fill="#33373d">no Wazuh alert = gap;</text>
+<text x="680.0" y="268.5" font-size="8.7" fill="#33373d">Splunk &#x27;Run Key&#x27; fired</text>
+<text x="680.0" y="282.0" font-size="9.5" font-weight="700" fill="#e0a800">LOGGED-ONLY (Wazuh)</text>
+<text x="680.0" y="295.5" font-size="8.7" fill="#33373d">Splunk compensating ALERTED</text>
+<text x="832.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="836.0" y="108" width="156" height="46" rx="6" fill="#2e8b57"/>
+<text x="914.0" y="127" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Phase 6 &#183; Collection</text>
+<text x="914.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1005</text>
+<rect x="836.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="844.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="844.0" y="187.5" font-size="8.7" fill="#33373d">canary write</text>
+<text x="844.0" y="201.0" font-size="8.7" fill="#33373d">…-collect.txt</text>
+<text x="844.0" y="214.5" font-size="8.7" fill="#33373d">(SOC-Lab-Canary)</text>
+<text x="844.0" y="228.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="844.0" y="241.5" font-size="8.7" fill="#33373d">Wazuh FIM 554 L5</text>
+<text x="844.0" y="255.0" font-size="8.7" fill="#33373d">&#x27;File added&#x27;</text>
+<text x="844.0" y="268.5" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED</text>
+<text x="844.0" y="282.0" font-size="8.7" fill="#33373d">after extending FIM to host</text>
+<text x="996.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="1000.0" y="108" width="156" height="46" rx="6" fill="#2e8b57"/>
+<text x="1078.0" y="127" font-size="10.5" font-weight="700" fill="#ffffff" text-anchor="middle">Phase 7 &#183; Exfiltration</text>
+<text x="1078.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1041</text>
+<rect x="1000.0" y="158" width="156" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="1008.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="1008.0" y="187.5" font-size="8.7" fill="#33373d">Invoke-RestMethod POST</text>
+<text x="1008.0" y="201.0" font-size="8.7" fill="#33373d">canary → 10.10.3.3:8081</text>
+<text x="1008.0" y="214.5" font-size="8.7" fill="#33373d">(…-exfil)</text>
+<text x="1008.0" y="228.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="1008.0" y="241.5" font-size="8.7" fill="#33373d">Sysmon 3 + Wazuh</text>
+<text x="1008.0" y="255.0" font-size="8.7" fill="#33373d">510144 L12 + Splunk</text>
+<text x="1008.0" y="268.5" font-size="8.7" fill="#33373d">+ OPNsense filterlog</text>
+<text x="1008.0" y="282.0" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED</text>
+<text x="1008.0" y="295.5" font-size="8.7" fill="#33373d">golden thread × 4 systems</text>
+<rect x="16" y="331" width="1148" height="70" rx="8" fill="#1a1030" stroke="#7b52ab"/>
+<text x="30" y="352" font-size="12" font-weight="700" fill="#d9c7ff">Golden thread (Phase 7)</text>
+<text x="30" y="369" font-size="10.5" fill="#efe9ff">Same marker op001-72786b04-exfil and flow 10.10.2.8 &#8594; 10.10.3.3:8081 appear across endpoint (Sysmon 3) &#8594; Wazuh (510144) &#8594; Splunk &#8594; OPNsense filterlog</text>
+<text x="30" y="381" font-size="9.5" fill="#b9a9e0">&#8212; one correlated chain, not a single staged image.</text>
+</svg>

@@ -1,8 +1,7 @@
 # CASE-OP003 · Lateral Movement Between Workstations
 
-| | |
-|---|---|
 | **Case** | CASE-OP003 (purple-team operation OP-003) |
+|---|---|
 | **Dates** | 2026-09-28 to 2026-09-29 |
 | **Status** | Closed: recovered and negative-validated |
 | **Hosts** | Foothold `WIN11-OPS01` (10.10.2.9) → target `Win10` (10.10.2.4) |
@@ -19,6 +18,11 @@ could not run anything on the second machine**: its host firewall, disabled WinR
 and Windows' remote token filtering blocked execution. So this was a **detection
 gap but a prevention success**. **Top recommendation:** alert on
 workstation-to-workstation logons, which became OP-004 D2.
+
+<figure class="cdl-wide" markdown>
+![OP-003 master timeline: reachability prevented, lateral auth missed, execution prevented](../assets/img/timeline-op003.svg)
+<figcaption>Master timeline: a detection blind spot between two prevention wins. Click to zoom.</figcaption>
+</figure>
 
 ## 2. Disposition
 
@@ -63,6 +67,20 @@ workstation-to-workstation logons, which became OP-004 D2.
 | A TARGET-zone peer (this case) | 🟥 Nothing |
 
 Only the source network changed, and the alert went from level 14 to nothing.
+
+<div class="grid" markdown>
+
+<figure markdown>
+![Wazuh: no alerts of level 12+ on Windows10](../assets/shots/op003-hop-no-alert.png)
+<figcaption>No alert: rule <code>99920</code> and every level-12+ rule stayed at zero.</figcaption>
+</figure>
+
+<figure markdown>
+![Wazuh archives: Event 4624 type 3 from 10.10.2.9 as labuser](../assets/shots/op003-4624-logged-only.png)
+<figcaption>But it was logged: Event 4624, type 3, from the peer workstation, in the archive index.</figcaption>
+</figure>
+
+</div>
 
 **The detection built afterwards (D2, Splunk):**
 

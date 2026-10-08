@@ -23,6 +23,23 @@ Each was validated **both ways** in the lab before being enabled:
   10-minute window on any host had 1.
 - **D2** caught the OP-003 hop; across 7 days of normal logons it matched nothing else.
 
+<div class="grid" markdown>
+
+<figure markdown>
+![D1 firing: 8 distinct discovery categories](../assets/shots/op004-d1-fires.png)
+<figcaption>D1 fires on the replayed OP-002 discovery burst (8 categories, threshold 4).</figcaption>
+</figure>
+
+<figure markdown>
+![D1 over a normal window: no results](../assets/shots/op004-d1-baseline-quiet.png)
+<figcaption>The same search over a normal window: no results.</figcaption>
+</figure>
+
+</div>
+
+A **blind re-run** on 2026-09-30 then caught both D1 and D2 cold, in about 5 and 6
+minutes. See [Results](../operations/results.md).
+
 ## Inventory
 
 | Detection | ATT&CK | Formats | Origin |
