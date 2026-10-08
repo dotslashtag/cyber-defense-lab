@@ -7,8 +7,8 @@ import yaml
 from sigma.backends.splunk import SplunkBackend
 from sigma.correlations import SigmaCorrelationRule
 
-from conftest import load_cases, sigma_files
-from sigma_eval import correlation_matches, rule_matches
+from detection_helpers import load_cases, sigma_files
+from evtx_hunter.sigma_eval import correlation_matches, rule_matches
 
 CASES = load_cases("sigma")
 FILES = sigma_files()

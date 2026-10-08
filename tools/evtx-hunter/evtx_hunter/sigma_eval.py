@@ -88,11 +88,12 @@ def _parse_time(value: str) -> datetime:
     return datetime.fromisoformat(value.replace("Z", "+00:00"))
 
 
-def correlation_matches(corr: SigmaCorrelationRule, events: list[dict]) -> bool:
-    """True if any group of events satisfies the correlation inside one timespan.
+def correlation_hits(corr: SigmaCorrelationRule, events: list[dict]) -> list[tuple[tuple, list[dict]]]:
+    """Groups that satisfy the correlation, with the events in the first matching window.
 
     Events need a `_time` ISO-8601 timestamp. Windows slide per event, so a burst
-    split across a fixed bucket boundary still counts.
+    split across a fixed bucket boundary still counts. Each group key is the tuple
+    of the correlation's `group-by` values.
     """
     base_rules = [ref.rule for ref in corr.rules]
     matched = [e for e in events if any(rule_matches(r, e) for r in base_rules)]
@@ -111,7 +112,8 @@ def correlation_matches(corr: SigmaCorrelationRule, events: list[dict]) -> bool:
     }
     passes = ops[cond.op]
 
-    for group in groups.values():
+    hits = []
+    for key, group in groups.items():
         group.sort(key=lambda e: _parse_time(e["_time"]))
         for i, start in enumerate(group):
             t0 = _parse_time(start["_time"])
@@ -126,5 +128,11 @@ def correlation_matches(corr: SigmaCorrelationRule, events: list[dict]) -> bool:
             else:
                 raise NotImplementedError(f"Unsupported correlation type: {corr.type}")
             if passes(n):
-                return True
-    return False
+                hits.append((key, window))
+                break
+    return hits
+
+
+def correlation_matches(corr: SigmaCorrelationRule, events: list[dict]) -> bool:
+    """True if any group of events satisfies the correlation inside one timespan."""
+    return bool(correlation_hits(corr, events))
