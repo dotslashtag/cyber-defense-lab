@@ -70,5 +70,8 @@ nav:
       - Beacon Hunter: tools/beacon-hunter.md
   - Casebook:
       - casebook/index.md
+      - "CASE-OP001: Commodity intrusion": casebook/op-001-commodity-intrusion.md
+      - "CASE-OP002: Quiet intrusion": casebook/op-002-stealth-tradecraft.md
+      - "CASE-OP003: Lateral movement": casebook/op-003-lateral-movement.md
   - Roadmap: roadmap.md
   - About: about.md
