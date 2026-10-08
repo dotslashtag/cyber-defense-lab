@@ -10,7 +10,7 @@ of running a full detect → investigate → respond loop against emulated attac
 
 | Folder | What it is | Status |
 |---|---|---|
-| `site/` | Portfolio hub site (MkDocs Material → GitHub Pages) | 🚧 Week 1 |
+| `docs/` | Portfolio hub site source (MkDocs Material → GitHub Pages) | ✅ Week 1 |
 | `detections/` | Detection-as-code: Sigma, Wazuh XML and Splunk SPL, tested in CI against sample logs | ⏳ Week 2 |
 | `casebook/` | Incident reports for purple-team operations OP-001 to OP-003 | ⏳ Week 3 |
 | `tools/evtx-hunter/` | Sysmon/EVTX triage: process trees, Sigma matching, timelines | ⏳ Week 4 |
@@ -35,6 +35,13 @@ then checked both ways: they fire on the attack and stay quiet on normal activit
 - Lab IPs (`10.10.x.x`) and fictional accounts are intentional.
 - Secrets, tokens and webhook URLs are removed, and every push is checked by a gitleaks secret scan in CI.
 
+## Build the site locally
+
+```bash
+pip install -r requirements-docs.txt
+mkdocs serve   # http://127.0.0.1:8000
+```
+
 ## License
 
-MIT (code) · CC BY 4.0 (write-ups), *to be finalized*
+Code is under the [MIT License](LICENSE).
