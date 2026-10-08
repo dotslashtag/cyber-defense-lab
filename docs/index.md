@@ -1,35 +1,94 @@
 ---
+title: Home
 hide:
   - navigation
   - toc
 ---
 
-# Cyber Defense Lab
+<div class="cdl-hero" markdown>
 
-**A home SOC, built and run end to end:** telemetry → detection engineering →
-purple-team operations → SOAR with human-approved response.
+<p class="cdl-kicker">SOC analyst · detection engineering · security automation</p>
 
-I built this lab to practise the work a SOC analyst and security engineer actually
-does: collect the right telemetry, write detections, emulate real attacker behaviour,
-score what was caught and what wasn't, then fix the gaps and prove the fix.
+# I build a SOC, attack it, and fix what it misses.
 
-<div class="grid cards" markdown>
+A segmented home SOC (Wazuh, Splunk, Sysmon, n8n, TheHive, MISP) that I run
+against MITRE Caldera and Kali. Every attack is scored honestly, every miss
+becomes a detection, and every detection is tested and re-run blind.
 
--   :material-sword-cross: **Purple-team operations**
+[See the results](operations/results.md){ .md-button .md-button--primary }
+[Read a case](casebook/op-002-stealth-tradecraft.md){ .md-button }
+[Browse the code](https://github.com/dotslashtag/cyber-defense-lab){ .md-button }
+
+</div>
+
+<div class="cdl-stats" markdown>
+<div class="cdl-stat"><div class="n">4</div><div class="l">scored purple-team operations across 9 ATT&CK tactics</div></div>
+<div class="cdl-stat"><div class="n">17</div><div class="l">ATT&CK techniques exercised end to end</div></div>
+<div class="cdl-stat"><div class="n">4 / 5</div><div class="l">techniques found cold in the blind re-run, decoy ignored</div></div>
+<div class="cdl-stat"><div class="n">84</div><div class="l">automated tests on the detections and tools, run in CI</div></div>
+<div class="cdl-stat"><div class="n">0</div><div class="l">automatic containment actions: every response waits for a human</div></div>
+</div>
+
+## The loop, in one picture
+
+<div class="cdl-ba" markdown>
+<div markdown>
+**Native discovery** · OP-002
+
+<span class="cdl-pill missed">Missed</span> → <span class="cdl-pill alerted">Alerted</span>
+
+Built D1: 4+ discovery tools on one host in 10 min. Caught cold in ~5 min.
+</div>
+<div markdown>
+**Workstation → workstation logon** · OP-003
+
+<span class="cdl-pill missed">Missed</span> → <span class="cdl-pill alerted">Alerted</span>
+
+Built D2: logons between peer workstations. Caught cold in ~6 min.
+</div>
+<div markdown>
+**Run-key persistence** · OP-001
+
+<span class="cdl-pill logged">Logged-only</span> → <span class="cdl-pill alerted">Alerted</span>
+
+Found why Wazuh was silent; wrote rule `510150`. Caught in seconds.
+</div>
+</div>
+
+<figure class="cdl-wide" markdown>
+![ATT&CK coverage heatmap: outcome per technique across OP-001 to OP-004](assets/img/attack-coverage.svg)
+<figcaption>ATT&CK coverage after OP-001 to OP-004. Purple = a miss that OP-004 turned
+into a working detection; amber = still logged-only, on the backlog.</figcaption>
+</figure>
+
+## Explore
+
+<div class="grid cards cdl-two" markdown>
+
+-   :material-sword-cross: **Operations & results**
 
     ---
 
-    Four scored, assumed-breach operations across 9 ATT&CK tactics. Every outcome is
-    graded Prevented, Alerted, Logged-only or Missed, including the misses.
+    Four assumed-breach operations scored Prevented / Alerted / Logged-only /
+    Missed, then a blind re-run to prove the fixes.
 
-    [:octicons-arrow-right-24: Operations](operations/index.md)
+    [:octicons-arrow-right-24: Results](operations/results.md)
 
--   :material-radar: **Detection engineering**
+-   :material-file-document-outline: **Casebook**
 
     ---
 
-    Wazuh rules and Splunk correlations built from real misses, each validated
-    both ways: it fires on the technique and stays quiet on a normal baseline.
+    Incident reports written as a SOC analyst hands off a case: bottom line,
+    timeline, scope, indicators, response, and what changed.
+
+    [:octicons-arrow-right-24: Read the cases](casebook/index.md)
+
+-   :material-radar: **Detections as code**
+
+    ---
+
+    Sigma, Wazuh and Splunk rules with must-fire and must-stay-quiet tests
+    that run on every change.
 
     [:octicons-arrow-right-24: Detections](detections/index.md)
 
@@ -37,36 +96,20 @@ score what was caught and what wasn't, then fix the gaps and prove the fix.
 
     ---
 
-    Analyzers for phishing email, Sysmon/EVTX and PCAP beaconing, each tested
-    on data from this lab and wired into the SOAR pipeline.
+    EVTX Hunter: triage Windows logs with the same rules, rebuild process trees,
+    and send findings to TheHive. More tools on the way.
 
     [:octicons-arrow-right-24: Tools](tools/index.md)
 
--   :material-file-document-outline: **Casebook**
-
-    ---
-
-    Incident reports for each operation, written as a SOC analyst would hand
-    off a case.
-
-    [:octicons-arrow-right-24: Casebook](casebook/index.md)
-
 </div>
 
-## By the numbers
+## How the lab is built
 
-| Metric | Value |
-|---|---|
-| Purple-team operations (scored, evidenced) | **4** (OP-001 to OP-004) |
-| Single-technique playbooks validated | **25+** |
-| ATT&CK techniques exercised | **17** across **9** tactics |
-| Detection gaps found and then **closed** | **3** (native discovery, workstation-to-workstation lateral auth, Run-key mislabel) |
-| Automatic containment actions | **0**: every response waits for a human approval |
+Four zones under default-deny (management, monitored endpoints, attacker, WAN),
+with alerts flowing Wazuh → Splunk and high-severity alerts into n8n for
+enrichment, a TheHive case and a signed Slack approval before any response.
 
-## The stack
+[Architecture and data flow](lab/architecture.md){ .md-button }
 
-Wazuh 4.14 · Splunk 10.4 · Sysmon · OPNsense + Suricata · n8n · TheHive 5 ·
+**Stack:** Wazuh 4.14 · Splunk 10.4 · Sysmon · OPNsense + Suricata · n8n · TheHive 5 ·
 MISP 2.5 · MITRE Caldera 5.3 · Kali · Active Directory · Windows 10/11 · Ubuntu
-
-[Explore the lab architecture](lab/architecture.md){ .md-button .md-button--primary }
-[See the roadmap](roadmap.md){ .md-button }

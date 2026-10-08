@@ -18,6 +18,11 @@ Outcomes are scored honestly:
 
 ## ATT&CK coverage
 
+<figure class="cdl-wide" markdown>
+![ATT&CK coverage heatmap](../assets/img/attack-coverage.svg)
+<figcaption>Outcome per technique across OP-001 to OP-004. Purple = closed by OP-004.</figcaption>
+</figure>
+
 | Tactic | Technique | Outcome | Coverage now |
 |---|---|---|---|
 | Execution | T1059.001 PowerShell | 🟩 Alerted | Stable |
@@ -32,6 +37,10 @@ Outcomes are scored honestly:
 
 The 🟥 rows are the point: each was found by a scored operation, and three have
 been turned into deployed detections. The ⛏ items are a known, prioritized backlog.
+
+!!! success "Did the fixes work?"
+    Yes. A blind re-run caught 4 of 5 techniques cold, including both former misses.
+    See [Results](results.md).
 
 !!! info "Full write-ups"
     Incident reports for OP-001, OP-002 and OP-003 are in the

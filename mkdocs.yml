@@ -14,26 +14,50 @@ theme:
     - navigation.tabs
     - navigation.sections
     - navigation.top
+    - navigation.footer
+    - toc.follow
     - navigation.indexes
     - content.code.copy
     - search.highlight
+  logo: assets/logo.svg
+  favicon: assets/logo.svg
+  font:
+    text: Inter
+    code: JetBrains Mono
   palette:
     - media: "(prefers-color-scheme: light)"
       scheme: default
-      primary: indigo
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-night
         name: Switch to dark mode
     - media: "(prefers-color-scheme: dark)"
       scheme: slate
-      primary: indigo
-      accent: teal
+      primary: custom
+      accent: custom
       toggle:
         icon: material/weather-sunny
         name: Switch to light mode
-  icon:
-    logo: material/shield-search
+
+extra_css:
+  - stylesheets/extra.css
+
+plugins:
+  - search
+  - glightbox:
+      zoomable: true
+      skip_classes:
+        - skip-lightbox
+
+extra:
+  social:
+    - icon: fontawesome/brands/github
+      link: https://github.com/dotslashtag
+      name: GitHub
+  generator: false
+
+copyright: Built and operated by dotslashtag · Lab content is from an isolated, authorized home lab
 
 markdown_extensions:
   - admonition
@@ -61,6 +85,7 @@ nav:
       - Architecture: lab/architecture.md
   - Operations:
       - operations/index.md
+      - Results: operations/results.md
   - Detections:
       - detections/index.md
   - Tools:

@@ -1,8 +1,7 @@
 # CASE-OP002 · Quiet Intrusion Using Built-In Tools
 
-| | |
-|---|---|
 | **Case** | CASE-OP002 (purple-team operation OP-002) |
+|---|---|
 | **Dates** | 2026-09-25 to 2026-09-28 |
 | **Status** | Closed: recovered and negative-validated |
 | **Host** | `WIN11-OPS01` (10.10.2.9), Windows 11, domain-joined |
@@ -20,6 +19,11 @@ was successfully exfiltrated with no alert** because its destination was one IP
 away from a listed address. The lesson: the SOC caught *tools and known
 indicators*, not *attacker behaviour*. **Top recommendation:** detections based on
 behaviour, which became OP-004 (D1, D3) and the Beacon Hunter tool.
+
+<figure class="cdl-wide" markdown>
+![OP-002 master timeline: six quiet phases with outcomes](../assets/img/timeline-op002.svg)
+<figcaption>Master timeline. Three phases missed, one logged-only: the gaps that drove OP-004. Click to zoom.</figcaption>
+</figure>
 
 ## 2. Disposition
 
@@ -81,6 +85,25 @@ behaviour, which became OP-004 (D1, D3) and the Beacon Hunter tool.
 |---|---|---|
 | Destination | `10.10.3.3` (on the IOC list) | `10.10.3.5` (not on it) |
 | Result | `510144` L12 alert | No alert |
+
+<div class="grid" markdown>
+
+<figure markdown>
+![PowerShell PUT of loot.zip to 10.10.3.5 returning 200 OK](../assets/shots/op002-exfil-unlisted-ip.png)
+<figcaption>The exfiltration: <code>loot.zip</code> uploaded to an address not on the IOC list. HTTP 200.</figcaption>
+</figure>
+
+<figure markdown>
+![Splunk search for level 12+ alerts returning no results](../assets/shots/op002-exfil-no-alert.png)
+<figcaption>The proof it was missed: no alert of level 12 or above for the host in that hour.</figcaption>
+</figure>
+
+<figure markdown>
+![Wazuh query for discovery alerts returning no results](../assets/shots/op002-native-discovery-no-alert.png)
+<figcaption>Stage 2b: native discovery in a normal shell produced no alert at all.</figcaption>
+</figure>
+
+</div>
 
 **How to hunt this:** look at everything high-severity first (`rule.level >= 12`)
 instead of searching for the one rule you expect. Searching only for `510144` hid
