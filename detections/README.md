@@ -14,7 +14,6 @@ detections/
 └── tests/
     ├── cases/sigma/        Must-fire / must-stay-quiet events per Sigma rule
     ├── cases/wazuh/        Same, per Wazuh rule ID
-    ├── sigma_eval.py       Offline Sigma evaluator built on pySigma's parser
     ├── test_sigma.py       Metadata, Splunk conversion, positive/negative tests
     └── test_wazuh.py       Structure checks + field-pattern tests
 ```
@@ -35,7 +34,7 @@ detections/
 ## Run the tests
 
 ```bash
-pip install -r requirements-detections.txt
+pip install -r requirements-detections.txt -e tools/evtx-hunter
 pytest detections/tests -v
 ```
 
@@ -49,7 +48,8 @@ sigma convert -t splunk detections/sigma/windows/proc_creation_rundll32_spawned_
 ## What the tests do and don't cover
 
 - **Sigma:** each rule is parsed by pySigma, converted to Splunk, and evaluated
-  against its sample events, including the correlation rule's 10-minute
+  against its sample events by the evaluator in
+  [`tools/evtx-hunter`](../tools/evtx-hunter) (the same engine that hunts with these rules), including the correlation rule's 10-minute
   sliding window.
 - **Wazuh:** rule IDs, structure and ATT&CK tags are checked, and each rule's own
   field patterns are run against sample alerts. The parent rule (`if_sid`) and the

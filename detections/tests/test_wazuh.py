@@ -10,7 +10,7 @@ import xml.etree.ElementTree as ET
 
 import pytest
 
-from conftest import WAZUH_RULES, load_cases
+from detection_helpers import WAZUH_RULES, load_cases
 
 CASES = load_cases("wazuh")
 LOCAL_RANGE = range(510100, 510200)
