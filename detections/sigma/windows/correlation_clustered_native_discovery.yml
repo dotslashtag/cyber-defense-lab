@@ -1,0 +1,28 @@
+title: Clustered Native Discovery Activity
+id: a5f6ee1a-bc24-488f-a50c-0261fc690e24
+status: test
+description: |
+  Four or more different native discovery tools run on one host within 10 minutes.
+  Detects what an intruder does (survey the host and domain) rather than which tool
+  they use, so it still fires on "living off the land" discovery. Built after OP-002
+  Phase 2b, where native discovery produced no alert. Sigma version of the lab
+  Splunk search "SOC - Clustered Discovery Activity" (OP-004 D1). Differences: the
+  Splunk version counts discovery categories (for example net user and net group are
+  one category); this version counts distinct binaries.
+author: dotslashtag
+date: 2026-10-08
+tags:
+  - attack.discovery
+correlation:
+  type: value_count
+  rules:
+    - native_discovery_tools
+  group-by:
+    - Computer
+  timespan: 10m
+  condition:
+    field: Image
+    gte: 4
+falsepositives:
+  - Helpdesk or admin troubleshooting sessions on a host
+level: medium

@@ -1,0 +1,70 @@
+title: Native Windows Discovery Command
+id: 8a07ee26-aa61-4c02-9706-6f13815dcf2d
+name: native_discovery_tools
+status: test
+description: |
+  A single built-in discovery command (whoami, systeminfo, net user, nltest and
+  similar). Too noisy to alert on alone; it is the base rule for the correlation
+  "Clustered Native Discovery Activity" (OP-004 D1). The Wazuh agent's own
+  "net user" inventory is excluded.
+author: dotslashtag
+date: 2026-10-08
+tags:
+  - attack.discovery
+  - attack.t1033
+  - attack.t1082
+  - attack.t1016
+  - attack.t1057
+  - attack.t1087.001
+  - attack.t1087.002
+  - attack.t1018
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_tools:
+    Image|endswith:
+      - '\whoami.exe'
+      - '\systeminfo.exe'
+      - '\hostname.exe'
+      - '\ipconfig.exe'
+      - '\nltest.exe'
+      - '\tasklist.exe'
+      - '\quser.exe'
+      - '\query.exe'
+      - '\qwinsta.exe'
+      - '\arp.exe'
+      - '\route.exe'
+      - '\netstat.exe'
+      - '\wmic.exe'
+  selection_net_img:
+    Image|endswith:
+      - '\net.exe'
+      - '\net1.exe'
+  selection_net_cli:
+    CommandLine|contains:
+      - ' user'
+      - ' group'
+      - 'localgroup'
+      - ' accounts'
+      - ' view'
+  selection_ps_img:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  selection_ps_cli:
+    CommandLine|contains:
+      - 'Get-LocalUser'
+      - 'Get-LocalGroup'
+      - 'Get-NetIPConfiguration'
+      - 'Get-NetIPAddress'
+      - 'Get-NetTCPConnection'
+      - 'Get-ADUser'
+      - 'Get-ADComputer'
+      - 'Get-ADGroup'
+  filter_wazuh_agent:
+    ParentImage|endswith: '\wazuh-agent.exe'
+  condition: (selection_tools or (selection_net_img and selection_net_cli) or (selection_ps_img and selection_ps_cli)) and not filter_wazuh_agent
+falsepositives:
+  - Individually common; alert only through the correlation rule
+level: informational

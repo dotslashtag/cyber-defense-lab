@@ -1,0 +1,31 @@
+```SOC - Clustered Discovery Activity (OP-004 D1). Four or more distinct discovery categories from one host in the search window. Reads the Wazuh archive index, whose lines carry a syslog prefix before the JSON, so the JSON is extracted inline.```
+index=wazuh_archives "EventChannel"
+| rex field=_raw "EventChannel (?<_json>\{.*\})$"
+| spath input=_json
+| rex field=_raw "\((?<agent_name>[^)]+)\)\s+any->EventChannel"
+| rename "win.system.eventID" as eventID, "win.eventdata.commandLine" as commandLine,
+         "win.eventdata.image" as image, "win.eventdata.parentImage" as parentImage
+| search eventID=1
+| eval img=lower(image), cl=lower(commandLine)
+| eval disco=case(
+   like(img,"%whoami.exe"),"whoami",
+   like(img,"%systeminfo.exe"),"systeminfo",
+   like(img,"%hostname.exe"),"hostname",
+   like(img,"%ipconfig.exe"),"ipconfig",
+   like(img,"%nltest.exe"),"nltest",
+   (like(img,"%net.exe") OR like(img,"%net1.exe")) AND (like(cl,"% user%") OR like(cl,"% group%") OR like(cl,"%localgroup%") OR like(cl,"%accounts%") OR like(cl,"% view%")),"net_enum",
+   like(img,"%tasklist.exe"),"tasklist",
+   (like(img,"%quser.exe") OR like(img,"%query.exe") OR like(img,"%qwinsta.exe")),"session_enum",
+   like(img,"%arp.exe"),"arp",
+   like(img,"%route.exe"),"route",
+   like(img,"%netstat.exe"),"netstat",
+   like(img,"%wmic.exe"),"wmic",
+   (like(img,"%powershell.exe") OR like(img,"%pwsh.exe")) AND (like(cl,"%get-localuser%") OR like(cl,"%get-localgroup%") OR like(cl,"%get-netipconfiguration%") OR like(cl,"%get-aduser%") OR like(cl,"%get-adcomputer%") OR like(cl,"%get-adgroup%") OR like(cl,"%get-nettcpconnection%") OR like(cl,"%get-netipaddress%")),"psh_disco",
+   true(),null())
+| where isnotnull(disco)
+| where NOT (disco="net_enum" AND like(lower(parentImage),"%wazuh-agent.exe"))
+| stats dc(disco) as distinct_cmds values(disco) as cmds values(commandLine) as commandLines
+        values(parentImage) as parents min(_time) as first_seen max(_time) as last_seen by agent_name
+| where distinct_cmds>=4
+| convert ctime(first_seen) ctime(last_seen)
+| sort - distinct_cmds

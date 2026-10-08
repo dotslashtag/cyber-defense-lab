@@ -1,0 +1,14 @@
+```SOC - Workstation-to-Workstation Lateral Auth (OP-004 D2). Network (3) or RDP (10) logon arriving on a workstation from a peer workstation. Lab workstation set: Windows10=10.10.2.4, WIN11-OPS01=10.10.2.9. v2: replace the hard-coded set with a workstations lookup.```
+index=wazuh_archives "EventChannel"
+| rex field=_raw "EventChannel (?<_json>\{.*\})$"
+| spath input=_json
+| rex field=_raw "\((?<agent_name>[^)]+)\)\s+any->EventChannel"
+| rename "win.system.eventID" as eventID, "win.system.computer" as computer,
+         "win.eventdata.logonType" as logonType, "win.eventdata.ipAddress" as srcip,
+         "win.eventdata.targetUserName" as targetUser, "win.eventdata.ipPort" as srcport
+| search eventID=4624 (logonType=3 OR logonType=10)
+| where (agent_name="Windows10" OR agent_name="WIN11-OPS01")
+| eval own_ip=case(agent_name=="Windows10","10.10.2.4", agent_name=="WIN11-OPS01","10.10.2.9", true(),"none")
+| where match(srcip,"^10\.10\.2\.(4|9)$") AND srcip!=own_ip
+| table _time, agent_name, computer, srcip, targetUser, logonType, srcport
+| sort - _time

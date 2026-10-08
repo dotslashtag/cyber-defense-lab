@@ -1,0 +1,72 @@
+<!--
+  Cyber Defense Lab - Wazuh custom rules (local range 510100-510199)
+
+  Rules 510140-510144 are copied from the lab playbooks. Rule 510150 was rebuilt
+  from the lab notes (parent, writer pattern, level and ATT&CK ID are as recorded);
+  its description wording may differ from the deployed rule.
+  Each rule narrows a stock Wazuh/SOCFortress parent rule (if_sid) to a specific
+  attacker behaviour and was validated with a controlled emulation (see PB-xxx).
+-->
+<group name="local,soc_lab,">
+
+  <!-- PB-003: PowerShell launched with -ExecutionPolicy Bypass.
+       Parent 92027 = Sysmon process creation of PowerShell. -->
+  <rule id="510140" level="10">
+    <if_sid>92027</if_sid>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)-executionpolicy\s+bypass</field>
+    <description>Suspicious PowerShell launched with ExecutionPolicy Bypass.</description>
+    <group>powershell,execution_policy_bypass,windows,</group>
+    <mitre>
+      <id>T1059.001</id>
+    </mitre>
+  </rule>
+
+  <!-- PB-005 / OP-001 Phase 2: Defender Tamper Protection blocked a change (Event 5013). -->
+  <rule id="510142" level="12">
+    <if_sid>62100</if_sid>
+    <field name="win.system.providerName">^Microsoft-Windows-Windows Defender$</field>
+    <field name="win.system.eventID">^5013$</field>
+    <description>Microsoft Defender Tamper Protection blocked a configuration change.</description>
+    <group>defender,tamper_protection,defense_evasion,windows,</group>
+    <mitre>
+      <id>T1562.001</id>
+    </mitre>
+  </rule>
+
+  <!-- PB-009: rundll32 spawned by PowerShell (signed binary proxy execution). -->
+  <rule id="510143" level="10">
+    <if_sid>100100</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\rundll32\.exe$</field>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)\\powershell\.exe$</field>
+    <description>Suspicious Rundll32 process launched by PowerShell.</description>
+    <group>rundll32,signed_binary_proxy_execution,powershell,windows,</group>
+    <mitre>
+      <id>T1218.011</id>
+      <id>T1059.001</id>
+    </mitre>
+  </rule>
+
+  <!-- PB-010 / PB-017 / PB-019: network connection to an IP on the lab's IOC list.
+       Deliberately no ATT&CK ID: an IOC match alone does not prove a technique. -->
+  <rule id="510144" level="12">
+    <if_sid>102503</if_sid>
+    <list field="win.eventdata.destinationIp" lookup="address_match_key">etc/lists/pb010-controlled-ioc-ip</list>
+    <description>Connection to controlled IOC IP: $(win.eventdata.destinationIp):$(win.eventdata.destinationPort).</description>
+    <group>network_connection,threat_intelligence,windows,</group>
+  </rule>
+
+  <!-- PB-012 / OP-001 / OP-002: Run/RunOnce key written by a script host.
+       Parent 92300 is the silent (level 0) Sysmon Event 13 Run-key rule; the stock
+       children only escalate for reg.exe or .lnk/.vbs targets, so a PowerShell
+       writer was missed until this rule was added. -->
+  <rule id="510150" level="10">
+    <if_sid>92300</if_sid>
+    <field name="win.eventdata.image" type="pcre2">(?i)\\(powershell|pwsh|wscript|cscript|mshta)\.exe$</field>
+    <description>Run/RunOnce key modified by script host $(win.eventdata.image).</description>
+    <group>registry,persistence,windows,</group>
+    <mitre>
+      <id>T1547.001</id>
+    </mitre>
+  </rule>
+
+</group>

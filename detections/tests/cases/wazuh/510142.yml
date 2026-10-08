@@ -1,0 +1,20 @@
+positive:
+  - description: OP-001 Phase 2, Tamper Protection blocked disabling real-time protection
+    event:
+      win:
+        system:
+          providerName: 'Microsoft-Windows-Windows Defender'
+          eventID: '5013'
+negative:
+  - description: Defender malware detection (1116)
+    event:
+      win:
+        system:
+          providerName: 'Microsoft-Windows-Windows Defender'
+          eventID: '1116'
+  - description: Event 5013 from a different provider
+    event:
+      win:
+        system:
+          providerName: 'Microsoft-Windows-Something Else'
+          eventID: '5013'

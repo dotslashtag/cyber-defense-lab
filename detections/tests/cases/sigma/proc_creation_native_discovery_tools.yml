@@ -1,0 +1,32 @@
+positive:
+  - description: whoami
+    event:
+      Image: 'C:\Windows\System32\whoami.exe'
+      CommandLine: 'whoami /all'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+  - description: net localgroup administrators
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      CommandLine: 'net localgroup administrators'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+  - description: PowerShell AD discovery cmdlet
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell -c "Get-ADComputer -Filter *"'
+      ParentImage: 'C:\Windows\explorer.exe'
+negative:
+  - description: Wazuh agent's own "net user" inventory (excluded)
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      CommandLine: 'net user'
+      ParentImage: 'C:\Program Files (x86)\ossec-agent\wazuh-agent.exe'
+  - description: net.exe mapping a drive, not enumerating
+    event:
+      Image: 'C:\Windows\System32\net.exe'
+      CommandLine: 'net use Z: \\fileserver\share'
+      ParentImage: 'C:\Windows\System32\cmd.exe'
+  - description: Ordinary PowerShell command
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell -c "Get-ChildItem C:\Users"'
+      ParentImage: 'C:\Windows\explorer.exe'

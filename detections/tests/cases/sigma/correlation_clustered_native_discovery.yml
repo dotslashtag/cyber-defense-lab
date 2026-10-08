@@ -1,0 +1,41 @@
+positive:
+  - description: OP-004 D1 validation burst on WIN11-OPS01 (native, non-elevated shell)
+    events:
+      - {_time: '2026-09-29T03:19:38Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\whoami.exe', CommandLine: 'whoami', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:39Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\systeminfo.exe', CommandLine: 'systeminfo', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:40Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig /all', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:40Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\net.exe', CommandLine: 'net user', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:41Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\tasklist.exe', CommandLine: 'tasklist', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:42Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\quser.exe', CommandLine: 'quser', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:42Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\ROUTE.EXE', CommandLine: 'route print', ParentImage: 'C:\Windows\System32\cmd.exe'}
+      - {_time: '2026-09-29T03:19:43Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\NETSTAT.EXE', CommandLine: 'netstat -ano', ParentImage: 'C:\Windows\System32\cmd.exe'}
+  - description: Burst that straddles a 10-minute clock boundary still fires (sliding window)
+    events:
+      - {_time: '2026-09-29T03:29:30Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\whoami.exe', CommandLine: 'whoami'}
+      - {_time: '2026-09-29T03:29:50Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\hostname.exe', CommandLine: 'hostname'}
+      - {_time: '2026-09-29T03:30:10Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig'}
+      - {_time: '2026-09-29T03:30:20Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\nltest.exe', CommandLine: 'nltest /dclist:soc.lab'}
+negative:
+  - description: Benign baseline - Wazuh agent inventory repeating all day
+    events:
+      - {_time: '2026-09-29T01:00:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\net.exe', CommandLine: 'net user', ParentImage: 'C:\Program Files (x86)\ossec-agent\wazuh-agent.exe'}
+      - {_time: '2026-09-29T01:05:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\net.exe', CommandLine: 'net user', ParentImage: 'C:\Program Files (x86)\ossec-agent\wazuh-agent.exe'}
+      - {_time: '2026-09-29T01:10:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\net.exe', CommandLine: 'net user', ParentImage: 'C:\Program Files (x86)\ossec-agent\wazuh-agent.exe'}
+  - description: Same tool run repeatedly by a user counts once
+    events:
+      - {_time: '2026-09-29T02:00:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig'}
+      - {_time: '2026-09-29T02:00:30Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig /all'}
+      - {_time: '2026-09-29T02:01:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig /flushdns'}
+      - {_time: '2026-09-29T02:01:30Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig /renew'}
+  - description: Four tools, but on different hosts
+    events:
+      - {_time: '2026-09-29T02:10:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\whoami.exe', CommandLine: 'whoami'}
+      - {_time: '2026-09-29T02:10:10Z', Computer: 'WIN11-OPS01.soc.lab', Image: 'C:\Windows\System32\hostname.exe', CommandLine: 'hostname'}
+      - {_time: '2026-09-29T02:10:20Z', Computer: 'DC01.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig'}
+      - {_time: '2026-09-29T02:10:30Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\tasklist.exe', CommandLine: 'tasklist'}
+  - description: Four tools on one host, but spread over an hour
+    events:
+      - {_time: '2026-09-29T04:00:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\whoami.exe', CommandLine: 'whoami'}
+      - {_time: '2026-09-29T04:20:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\hostname.exe', CommandLine: 'hostname'}
+      - {_time: '2026-09-29T04:40:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\ipconfig.exe', CommandLine: 'ipconfig'}
+      - {_time: '2026-09-29T05:00:00Z', Computer: 'Win10.soc.lab', Image: 'C:\Windows\System32\tasklist.exe', CommandLine: 'tasklist'}

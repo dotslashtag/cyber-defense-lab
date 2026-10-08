@@ -11,7 +11,7 @@ of running a full detect → investigate → respond loop against emulated attac
 | Folder | What it is | Status |
 |---|---|---|
 | `docs/` | Portfolio hub site source (MkDocs Material → GitHub Pages) | ✅ Week 1 |
-| `detections/` | Detection-as-code: Sigma, Wazuh XML and Splunk SPL, tested in CI against sample logs | ⏳ Week 2 |
+| `detections/` | Detection-as-code: Sigma, Wazuh XML and Splunk SPL, tested in CI against sample logs | ✅ Week 2 |
 | `casebook/` | Incident reports for purple-team operations OP-001 to OP-003 | ⏳ Week 3 |
 | `tools/evtx-hunter/` | Sysmon/EVTX triage: process trees, Sigma matching, timelines | ⏳ Week 4 |
 | `tools/phish-analyzer/` | Phishing `.eml` analyzer (CLI plus a browser demo; files never leave your browser) | ⏳ Week 5 |

@@ -1,0 +1,26 @@
+positive:
+  - description: PB-003 controlled run, full flag
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Temp\pb003.ps1'
+  - description: Abbreviated -ep flag, lower case
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell -ep bypass -c "whoami"'
+  - description: PowerShell 7 with -exec
+    event:
+      Image: 'C:\Program Files\PowerShell\7\pwsh.exe'
+      CommandLine: 'pwsh.exe -exec Bypass -nop -w hidden'
+negative:
+  - description: Normal policy value
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -ExecutionPolicy RemoteSigned -File C:\Scripts\backup.ps1'
+  - description: Bypass flag on a different program
+    event:
+      Image: 'C:\Tools\installer.exe'
+      CommandLine: 'installer.exe -ExecutionPolicy Bypass'
+  - description: Word "bypass" in an ordinary argument
+    event:
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'powershell.exe -File C:\Scripts\check-proxy-bypass.ps1'

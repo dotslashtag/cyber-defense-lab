@@ -1,0 +1,16 @@
+positive:
+  - description: PB-009 controlled run
+    event:
+      Image: 'C:\Windows\System32\rundll32.exe'
+      ParentImage: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      CommandLine: 'rundll32.exe C:\Users\Public\payload.dll,Start'
+negative:
+  - description: rundll32 launched by Explorer (Control Panel applet)
+    event:
+      Image: 'C:\Windows\System32\rundll32.exe'
+      ParentImage: 'C:\Windows\explorer.exe'
+      CommandLine: 'rundll32.exe shell32.dll,Control_RunDLL'
+  - description: PowerShell launching something other than rundll32
+    event:
+      Image: 'C:\Windows\System32\notepad.exe'
+      ParentImage: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
