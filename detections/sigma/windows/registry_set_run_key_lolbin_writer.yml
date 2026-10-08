@@ -1,0 +1,40 @@
+title: Run/RunOnce Key Modified By Script Host Or LOLBin
+id: b340352c-cceb-40dd-be59-a2dfb3caab6a
+status: test
+description: |
+  A Run or RunOnce autostart value was written by a shell, script host or
+  living-off-the-land binary. The writer's image is kept in the output so the
+  analyst sees what actually made the change. Sigma version of the lab Splunk
+  search "SOC - Run/RunOnce Key Modified" (OP-004 D3), which replaced a search
+  whose title wrongly implied it only caught script hosts.
+author: dotslashtag
+date: 2026-10-08
+tags:
+  - attack.persistence
+  - attack.t1547.001
+logsource:
+  category: registry_set
+  product: windows
+detection:
+  selection_key:
+    TargetObject|contains:
+      - '\Software\Microsoft\Windows\CurrentVersion\Run\'
+      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
+  selection_writer:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+      - '\cmd.exe'
+      - '\wscript.exe'
+      - '\cscript.exe'
+      - '\mshta.exe'
+      - '\rundll32.exe'
+      - '\reg.exe'
+  condition: all of selection_*
+fields:
+  - Image
+  - TargetObject
+  - Details
+falsepositives:
+  - Software installers that register autostart entries via reg.exe or scripts
+level: medium

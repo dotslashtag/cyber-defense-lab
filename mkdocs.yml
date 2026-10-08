@@ -1,0 +1,74 @@
+site_name: Cyber Defense Lab
+site_description: Home SOC lab portfolio — detection engineering, purple-team operations, SOAR, and SOC analyzer tools.
+site_author: dotslashtag
+site_url: https://dotslashtag.github.io/cyber-defense-lab/
+repo_url: https://github.com/dotslashtag/cyber-defense-lab
+repo_name: dotslashtag/cyber-defense-lab
+edit_uri: ""
+docs_dir: docs
+site_dir: _site
+
+theme:
+  name: material
+  features:
+    - navigation.tabs
+    - navigation.sections
+    - navigation.top
+    - navigation.indexes
+    - content.code.copy
+    - search.highlight
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      primary: indigo
+      accent: teal
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+  icon:
+    logo: material/shield-search
+
+markdown_extensions:
+  - admonition
+  - attr_list
+  - md_in_html
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.details
+  - pymdownx.emoji:
+      emoji_index: !!python/name:material.extensions.emoji.twemoji
+      emoji_generator: !!python/name:material.extensions.emoji.to_svg
+  - pymdownx.superfences:
+      custom_fences:
+        - name: mermaid
+          class: mermaid
+          format: !!python/name:pymdownx.superfences.fence_code_format
+  - pymdownx.tabbed:
+      alternate_style: true
+
+nav:
+  - Home: index.md
+  - The Lab:
+      - lab/index.md
+      - Architecture: lab/architecture.md
+  - Operations:
+      - operations/index.md
+  - Detections:
+      - detections/index.md
+  - Tools:
+      - tools/index.md
+      - Phishing Analyzer: tools/phish-analyzer.md
+      - EVTX Hunter: tools/evtx-hunter.md
+      - Beacon Hunter: tools/beacon-hunter.md
+  - Casebook:
+      - casebook/index.md
+  - Roadmap: roadmap.md
+  - About: about.md

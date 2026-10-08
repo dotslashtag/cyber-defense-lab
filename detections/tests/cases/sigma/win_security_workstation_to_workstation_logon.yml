@@ -1,0 +1,45 @@
+positive:
+  - description: OP-003 hop - WIN11-OPS01 to Win10 as labuser, network logon (2026-09-28 13:39:17Z)
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'Win10.soc.lab'
+      IpAddress: '10.10.2.9'
+      IpPort: '64866'
+      TargetUserName: 'labuser'
+  - description: RDP between workstations
+    event:
+      EventID: 4624
+      LogonType: 10
+      Computer: 'WIN11-OPS01.soc.lab'
+      IpAddress: '10.10.2.4'
+      TargetUserName: 'labuser'
+negative:
+  - description: Workstation authenticating to the domain controller (normal)
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'DC01.soc.lab'
+      IpAddress: '10.10.2.9'
+      TargetUserName: 'labuser'
+  - description: Loopback logon on the workstation itself
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'Win10.soc.lab'
+      IpAddress: '::1'
+      TargetUserName: 'labuser'
+  - description: Interactive logon at the console (type 2)
+    event:
+      EventID: 4624
+      LogonType: 2
+      Computer: 'Win10.soc.lab'
+      IpAddress: '127.0.0.1'
+      TargetUserName: 'labuser'
+  - description: Failed logon (4625) from a peer workstation is a different event
+    event:
+      EventID: 4625
+      LogonType: 3
+      Computer: 'Win10.soc.lab'
+      IpAddress: '10.10.2.9'
+      TargetUserName: 'labuser'

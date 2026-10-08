@@ -1,0 +1,18 @@
+# Build output
+_site/
+__pycache__/
+*.pyc
+.venv/
+venv/
+
+# Never commit secrets or raw lab exports
+.env
+*.env
+*.pem
+*.key
+*.evtx
+*.pcap
+*.pcapng
+!**/samples/**
+.DS_Store
+.pytest_cache/

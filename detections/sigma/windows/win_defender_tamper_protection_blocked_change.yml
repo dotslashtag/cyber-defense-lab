@@ -1,0 +1,23 @@
+title: Defender Tamper Protection Blocked A Configuration Change
+id: a4d2e069-cfb1-4840-853d-850a34a3a4d3
+status: test
+description: |
+  Microsoft Defender Tamper Protection blocked an attempt to change a protected
+  setting (Event ID 5013), for example disabling real-time protection. The block
+  worked, but someone tried to weaken the endpoint's defences. Sigma version of lab
+  Wazuh rule 510142 (PB-005, OP-001 Phase 2).
+author: dotslashtag
+date: 2026-10-08
+tags:
+  - attack.defense-evasion
+  - attack.t1562.001
+logsource:
+  product: windows
+  service: windefend
+detection:
+  selection:
+    EventID: 5013
+  condition: selection
+falsepositives:
+  - Administrators changing Defender settings locally while Tamper Protection is on
+level: high

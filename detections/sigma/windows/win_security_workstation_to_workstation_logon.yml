@@ -1,0 +1,53 @@
+title: Workstation-To-Workstation Network Logon
+id: 15a7687e-950f-422b-9922-a946500cf3bf
+status: test
+description: |
+  A workstation received a network (type 3) or RDP (type 10) logon from another
+  workstation. Users rarely authenticate from one desktop to another, but attackers
+  moving laterally with valid credentials do. Built after OP-003, where an
+  intra-zone hop raised no alert. Sigma version of the lab Splunk search
+  "SOC - Workstation-to-Workstation Lateral Auth" (OP-004 D2).
+
+  The workstation hostnames and IP addresses below are lab values; replace them
+  with your own inventory. The Splunk version also drops logons whose source is the
+  receiving host's own IP, which Sigma cannot express; loopback sources are
+  filtered here instead.
+author: dotslashtag
+date: 2026-10-08
+tags:
+  - attack.lateral-movement
+  - attack.t1021.002
+  - attack.t1550.002
+  - attack.defense-evasion
+  - attack.t1078
+logsource:
+  product: windows
+  service: security
+detection:
+  selection_logon:
+    EventID: 4624
+    LogonType:
+      - 3
+      - 10
+  selection_target_workstation:
+    Computer:
+      - 'Win10.soc.lab'
+      - 'WIN11-OPS01.soc.lab'
+  selection_source_workstation:
+    IpAddress:
+      - '10.10.2.4'
+      - '10.10.2.9'
+  filter_loopback:
+    IpAddress:
+      - '127.0.0.1'
+      - '::1'
+      - '-'
+  condition: all of selection_* and not filter_loopback
+fields:
+  - Computer
+  - IpAddress
+  - TargetUserName
+  - LogonType
+falsepositives:
+  - IT staff remoting between desktops; peer-to-peer file sharing
+level: medium

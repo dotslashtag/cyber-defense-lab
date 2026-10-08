@@ -1,0 +1,14 @@
+positive:
+  - description: PB-003 controlled run
+    event:
+      win:
+        eventdata:
+          image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+          commandLine: 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Temp\pb003.ps1'
+negative:
+  - description: Normal execution policy
+    event:
+      win:
+        eventdata:
+          image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+          commandLine: 'powershell.exe -ExecutionPolicy RemoteSigned -File C:\Scripts\backup.ps1'

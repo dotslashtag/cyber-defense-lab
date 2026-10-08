@@ -1,0 +1,15 @@
+positive:
+  - description: OP-001 Phase 2, attempt to disable real-time protection blocked
+    event:
+      EventID: 5013
+      Provider_Name: 'Microsoft-Windows-Windows Defender'
+      Value: 'HKLM\SOFTWARE\Microsoft\Windows Defender\Real-Time Protection\DisableRealtimeMonitoring = 0x1'
+negative:
+  - description: Malware detected (1116), a different event
+    event:
+      EventID: 1116
+      Provider_Name: 'Microsoft-Windows-Windows Defender'
+  - description: Security intelligence update (2000)
+    event:
+      EventID: 2000
+      Provider_Name: 'Microsoft-Windows-Windows Defender'

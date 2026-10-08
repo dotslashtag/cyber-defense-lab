@@ -1,0 +1,26 @@
+positive:
+  - description: OP-001 persistence, PowerShell writes HKCU Run (validated live 2026-09-25)
+    event:
+      win:
+        eventdata:
+          image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+          targetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Run\Updater'
+  - description: wscript writer
+    event:
+      win:
+        eventdata:
+          image: 'C:\Windows\System32\WScript.exe'
+          targetObject: 'HKLM\Software\Microsoft\Windows\CurrentVersion\Run\Helper'
+negative:
+  - description: OneDrive registering its own autostart
+    event:
+      win:
+        eventdata:
+          image: 'C:\Users\labuser\AppData\Local\Microsoft\OneDrive\OneDrive.exe'
+          targetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Run\OneDrive'
+  - description: reg.exe writer is left to stock rule 92302
+    event:
+      win:
+        eventdata:
+          image: 'C:\Windows\System32\reg.exe'
+          targetObject: 'HKLM\Software\Microsoft\Windows\CurrentVersion\Run\Helper'

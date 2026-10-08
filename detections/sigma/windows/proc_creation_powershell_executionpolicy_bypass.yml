@@ -1,0 +1,28 @@
+title: PowerShell Launched With ExecutionPolicy Bypass
+id: 8f72d91e-c593-4b45-8542-9e886d948155
+status: test
+description: |
+  PowerShell started with the execution policy set to Bypass, a common way to run
+  untrusted scripts. Covers the abbreviated forms (-ep, -exec) as well as the full
+  -ExecutionPolicy flag. Sigma version of lab Wazuh rule 510140 (PB-003).
+references:
+  - https://learn.microsoft.com/en-us/powershell/module/microsoft.powershell.core/about/about_pwsh
+author: dotslashtag
+date: 2026-10-08
+tags:
+  - attack.execution
+  - attack.t1059.001
+logsource:
+  category: process_creation
+  product: windows
+detection:
+  selection_img:
+    Image|endswith:
+      - '\powershell.exe'
+      - '\pwsh.exe'
+  selection_cli:
+    CommandLine|re: '(?i)\s[-/](ep|ex[a-z]*)\s+bypass'
+  condition: all of selection_*
+falsepositives:
+  - Admin and deployment scripts that launch PowerShell with Bypass (baseline and allowlist by parent process)
+level: medium
