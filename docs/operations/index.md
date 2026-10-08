@@ -34,5 +34,5 @@ The 🟥 rows are the point: each was found by a scored operation, and three hav
 been turned into deployed detections. The ⛏ items are a known, prioritized backlog.
 
 !!! info "Full write-ups"
-    Detailed incident reports for each operation are coming to the
-    [Casebook](../casebook/index.md) in Week 3.
+    Incident reports for OP-001, OP-002 and OP-003 are in the
+    [Casebook](../casebook/index.md).
