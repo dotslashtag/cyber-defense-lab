@@ -1,0 +1,90 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1160 478" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="1160" height="478" fill="#ffffff"/>
+<text x="16" y="30" font-size="20" font-weight="700" fill="#1a1a1a">Cyber Defense Automation Lab &#8212; ATT&amp;CK Coverage</text>
+<text x="16" y="50" font-size="12" fill="#555">OP-001 to OP-004 &#183; assumed-breach, post-compromise &#183; outcome by technique</text>
+<rect x="16.0" y="67" width="16" height="16" rx="3" fill="#2b7bba"/>
+<text x="38.0" y="80" font-size="12" fill="#1a1a1a">Prevented</text>
+<rect x="144.8" y="67" width="16" height="16" rx="3" fill="#2e8b57"/>
+<text x="166.8" y="80" font-size="12" fill="#1a1a1a">Detected</text>
+<rect x="266.4" y="67" width="16" height="16" rx="3" fill="#e0a800"/>
+<text x="288.4" y="80" font-size="12" fill="#1a1a1a">Logged-only</text>
+<rect x="409.6" y="67" width="16" height="16" rx="3" fill="#c0392b"/>
+<text x="431.6" y="80" font-size="12" fill="#1a1a1a">Missed</text>
+<rect x="516.8" y="67" width="16" height="16" rx="3" fill="#7b52ab"/>
+<text x="538.8" y="80" font-size="12" fill="#1a1a1a">Closed by OP-004</text>
+<line x1="19.0" y1="120" x2="125.8" y2="120" stroke="#d0d0d0"/>
+<text x="72.4" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Execution</text>
+<rect x="19.0" y="150" width="106.8" height="46" rx="5" fill="#2e8b57"/>
+<text x="72.4" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1059</text>
+<text x="72.4" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">PowerShell</text>
+<line x1="131.8" y1="120" x2="238.6" y2="120" stroke="#d0d0d0"/>
+<text x="185.2" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Defense</text>
+<text x="185.2" y="119" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Evasion</text>
+<rect x="131.8" y="150" width="106.8" height="46" rx="5" fill="#2b7bba"/>
+<text x="185.2" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1562</text>
+<text x="185.2" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">Impair Defenses</text>
+<rect x="131.8" y="202" width="106.8" height="46" rx="5" fill="#2e8b57"/>
+<text x="185.2" y="221" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1036</text>
+<text x="185.2" y="236" font-size="9.5" fill="#ffffff" text-anchor="middle">Masquerading</text>
+<line x1="244.6" y1="120" x2="351.4" y2="120" stroke="#d0d0d0"/>
+<text x="298.0" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Credential</text>
+<text x="298.0" y="119" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Access</text>
+<rect x="244.6" y="150" width="106.8" height="46" rx="5" fill="#2e8b57"/>
+<text x="298.0" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1003</text>
+<text x="298.0" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">LSASS Access</text>
+<line x1="357.4" y1="120" x2="464.2" y2="120" stroke="#d0d0d0"/>
+<text x="410.8" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Discovery</text>
+<rect x="357.4" y="150" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="410.8" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1087</text>
+<text x="410.8" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">Account Disc.</text>
+<rect x="357.4" y="202" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="410.8" y="221" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1082</text>
+<text x="410.8" y="236" font-size="9.5" fill="#ffffff" text-anchor="middle">System Info</text>
+<rect x="357.4" y="254" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="410.8" y="273" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1016</text>
+<text x="410.8" y="288" font-size="9.5" fill="#ffffff" text-anchor="middle">Net Config</text>
+<rect x="357.4" y="306" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="410.8" y="325" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1057</text>
+<text x="410.8" y="340" font-size="9.5" fill="#ffffff" text-anchor="middle">Process Disc.</text>
+<rect x="357.4" y="358" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="410.8" y="377" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1033</text>
+<text x="410.8" y="392" font-size="9.5" fill="#ffffff" text-anchor="middle">Owner / User</text>
+<rect x="357.4" y="410" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="410.8" y="429" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1018</text>
+<text x="410.8" y="444" font-size="9.5" fill="#ffffff" text-anchor="middle">Remote Sys.</text>
+<line x1="470.2" y1="120" x2="577.0" y2="120" stroke="#d0d0d0"/>
+<text x="523.6" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Persistence</text>
+<rect x="470.2" y="150" width="106.8" height="46" rx="5" fill="#2e8b57"/>
+<text x="523.6" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1547</text>
+<text x="523.6" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">Run Keys</text>
+<line x1="583.0" y1="120" x2="689.8" y2="120" stroke="#d0d0d0"/>
+<text x="636.4" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Lateral</text>
+<text x="636.4" y="119" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Movement</text>
+<rect x="583.0" y="150" width="106.8" height="46" rx="5" fill="#7b52ab"/>
+<text x="636.4" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1021</text>
+<text x="636.4" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">SMB / Remote</text>
+<rect x="583.0" y="202" width="106.8" height="46" rx="5" fill="#2e8b57"/>
+<text x="636.4" y="221" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1550</text>
+<text x="636.4" y="236" font-size="9.5" fill="#ffffff" text-anchor="middle">Pass-the-Hash</text>
+<line x1="695.8" y1="120" x2="802.6" y2="120" stroke="#d0d0d0"/>
+<text x="749.2" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Command &amp;</text>
+<text x="749.2" y="119" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Control</text>
+<rect x="695.8" y="150" width="106.8" height="46" rx="5" fill="#e0a800"/>
+<text x="749.2" y="169" font-size="11.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">T1071</text>
+<text x="749.2" y="184" font-size="9.5" fill="#1a1a1a" text-anchor="middle">Web C2</text>
+<line x1="808.6" y1="120" x2="915.4" y2="120" stroke="#d0d0d0"/>
+<text x="862.0" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Collection</text>
+<rect x="808.6" y="150" width="106.8" height="46" rx="5" fill="#e0a800"/>
+<text x="862.0" y="169" font-size="11.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">T1005</text>
+<text x="862.0" y="184" font-size="9.5" fill="#1a1a1a" text-anchor="middle">Local Data</text>
+<line x1="921.4" y1="120" x2="1028.2" y2="120" stroke="#d0d0d0"/>
+<text x="974.8" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Impact</text>
+<rect x="921.4" y="150" width="106.8" height="46" rx="5" fill="#2e8b57"/>
+<text x="974.8" y="169" font-size="11.5" font-weight="700" fill="#ffffff" text-anchor="middle">T1565</text>
+<text x="974.8" y="184" font-size="9.5" fill="#ffffff" text-anchor="middle">Stored Data</text>
+<line x1="1034.2" y1="120" x2="1141.0" y2="120" stroke="#d0d0d0"/>
+<text x="1087.6" y="106" font-size="10.5" font-weight="600" fill="#333" text-anchor="middle">Exfiltration</text>
+<rect x="1034.2" y="150" width="106.8" height="46" rx="5" fill="#e0a800"/>
+<text x="1087.6" y="169" font-size="11.5" font-weight="700" fill="#1a1a1a" text-anchor="middle">T1041</text>
+<text x="1087.6" y="184" font-size="9.5" fill="#1a1a1a" text-anchor="middle">Exfil o/ C2</text>
+</svg>

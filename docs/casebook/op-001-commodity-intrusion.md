@@ -1,8 +1,7 @@
 # CASE-OP001 · Commodity Intrusion on a Workstation
 
-| | |
-|---|---|
 | **Case** | CASE-OP001 (purple-team operation OP-001) |
+|---|---|
 | **Dates** | 2026-09-22 to 2026-09-23 |
 | **Status** | Closed: recovered and negative-validated |
 | **Host** | `WIN11-PB026` (10.10.2.8), disposable Windows 11 Pro, domain-joined |
@@ -21,6 +20,12 @@ most serious being that **the malware's launch was buried in a noisy rule with 1
 false positives a week**. No data left the lab and no other host was affected.
 **Top recommendation:** tune out the noisy rule and add precise detections for
 persistence and long-running C2, which became the OP-004 work.
+
+<figure class="cdl-wide" markdown>
+![OP-001 master timeline: seven phases with the outcome of each](../assets/img/timeline-op001.svg)
+<figcaption>Master timeline. The same marker and flow appear on the endpoint, in Wazuh,
+in Splunk and in the firewall log for the exfiltration phase. Click to zoom.</figcaption>
+</figure>
 
 ## 2. Disposition
 
@@ -57,6 +62,32 @@ Stages are listed in the order they were run. Outcome key:
 | 5 Persistence | PowerShell wrote an HKCU `Run` value | **Wazuh silent.** The Splunk search `SOC - Suspicious Script Host Modifies Run Key` fired | 🟨 Wazuh / 🟩 Splunk |
 | 6 Collection | Decoy file written under `C:\ProgramData\SOC-Lab-Canary` | Nothing at first: file monitoring wasn't deployed on this host. After adding it, Wazuh `554` (L5) | 🟩 after fix |
 | 7 Exfiltration | PowerShell uploaded the decoy to `10.10.3.3:8081` | Wazuh `510144` (L12), Sysmon Event 3, OPNsense pass record | 🟩 |
+
+### Evidence
+
+<div class="grid" markdown>
+
+<figure markdown>
+![Defender Event 1116 and 1117 for the Sandcat agent](../assets/shots/op001-defender-prevented.png)
+<figcaption>Stage 1a: Defender detected and quarantined the agent (Events 1116/1117).</figcaption>
+</figure>
+
+<figure markdown>
+![Wazuh rule 510142 level 12 on Tamper Protection block](../assets/shots/op001-wazuh-510142-tamper.png)
+<figcaption>Stage 2: rule <code>510142</code> (L12, T1562.001) when Tamper Protection blocked the change.</figcaption>
+</figure>
+
+<figure markdown>
+![Splunk triggered alert for the Run-key write](../assets/shots/op001-splunk-runkey-compensating.png)
+<figcaption>Stage 5: Wazuh was silent; the Splunk Run-key search fired instead.</figcaption>
+</figure>
+
+<figure markdown>
+![Wazuh rule 510144 on the exfiltration connection](../assets/shots/op001-wazuh-510144-exfil.png)
+<figcaption>Stage 7: rule <code>510144</code> (L12) on PowerShell connecting to the exfil receiver.</figcaption>
+</figure>
+
+</div>
 
 ## 5. Scope
 

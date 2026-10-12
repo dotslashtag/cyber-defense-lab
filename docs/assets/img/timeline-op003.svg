@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1148 404" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="1148" height="404" fill="#ffffff"/>
+<text x="16" y="32" font-size="21" font-weight="700" fill="#1a1a1a">OP-003 Lateral Movement / Multi-Host — Master Timeline</text>
+<text x="16" y="52" font-size="11.5" fill="#555">2026-09-28/29 · foothold WIN11-OPS01 (10.10.2.9, agent 010) → pivot Windows10 (10.10.2.4, agent 006) · assumed-breach, non-extractive</text>
+<rect x="16.0" y="67" width="15" height="15" rx="3" fill="#2b7bba"/>
+<text x="36.0" y="79" font-size="11.5" fill="#1a1a1a">Prevented</text>
+<rect x="113.0" y="67" width="15" height="15" rx="3" fill="#2e8b57"/>
+<text x="133.0" y="79" font-size="11.5" fill="#1a1a1a">Alerted</text>
+<rect x="196.0" y="67" width="15" height="15" rx="3" fill="#e0a800"/>
+<text x="216.0" y="79" font-size="11.5" fill="#1a1a1a">Logged-only</text>
+<rect x="307.0" y="67" width="15" height="15" rx="3" fill="#c0392b"/>
+<text x="327.0" y="79" font-size="11.5" fill="#1a1a1a">Missed</text>
+<text x="399.0" y="79" font-size="10.5" fill="#888">kill-chain order &#8594;</text>
+<rect x="16.0" y="108" width="356" height="46" rx="6" fill="#2b7bba"/>
+<text x="194.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Reachability (SMB)</text>
+<text x="194.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1021.002 · T1078</text>
+<rect x="16.0" y="158" width="356" height="152.7" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="24.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="24.0" y="188.3" font-size="9.5" fill="#33373d">OPS01 → Win10 TCP/445, blocked by the Win10 host</text>
+<text x="24.0" y="202.6" font-size="9.5" fill="#33373d">firewall (Test-NetConnection 445 = False).</text>
+<text x="24.0" y="216.9" font-size="9.5" fill="#33373d">Scoped OP003-TEMP allow (RemoteAddress 10.10.2.9).</text>
+<text x="24.0" y="231.2" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="24.0" y="245.5" font-size="9.5" fill="#33373d">retest = True only after the scoped rule</text>
+<text x="24.0" y="259.8" font-size="10.3" font-weight="700" fill="#2b7bba">PREVENTED</text>
+<text x="24.0" y="274.1" font-size="9.5" fill="#33373d">default-deny peer SMB (host firewall)</text>
+<text x="380.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="388.0" y="108" width="356" height="46" rx="6" fill="#c0392b"/>
+<text x="566.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Lateral Auth (valid-cred hop)</text>
+<text x="566.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1021.002 · T1550.002 · T1078</text>
+<rect x="388.0" y="158" width="356" height="152.7" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="396.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="396.0" y="188.3" font-size="9.5" fill="#33373d">net use \\10.10.2.4\IPC$ as soc\labuser</text>
+<text x="396.0" y="202.6" font-size="9.5" fill="#33373d">(TARGET → peer TARGET)</text>
+<text x="396.0" y="216.9" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="396.0" y="231.2" font-size="9.5" fill="#33373d">99920 = 0 and rule.level≥12 = 0 (agent Windows10);</text>
+<text x="396.0" y="245.5" font-size="9.5" fill="#33373d">4624 Type 3 (src 10.10.2.9, labuser) in archives only</text>
+<text x="396.0" y="259.8" font-size="10.3" font-weight="700" fill="#c0392b">MISSED / Logged-only</text>
+<text x="396.0" y="274.1" font-size="9.5" fill="#33373d">zone-bound 99920 → closed by OP-004 D2</text>
+<text x="752.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="760.0" y="108" width="356" height="46" rx="6" fill="#2b7bba"/>
+<text x="938.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Pivot Execution</text>
+<text x="938.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1021 (not forced)</text>
+<rect x="760.0" y="158" width="356" height="152.7" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="768.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="768.0" y="188.3" font-size="9.5" fill="#33373d">attempt remote exec (WinRM / schtasks) —</text>
+<text x="768.0" y="202.6" font-size="9.5" fill="#33373d">deliberately not forced (Option A)</text>
+<text x="768.0" y="216.9" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="768.0" y="231.2" font-size="9.5" fill="#33373d">WinRM 5985 unreachable; local-account token</text>
+<text x="768.0" y="245.5" font-size="9.5" fill="#33373d">filtering strips op003_admin&#x27;s admin token;</text>
+<text x="768.0" y="259.8" font-size="9.5" fill="#33373d">schtasks /s &#x27;not supported&#x27; (135 open — RPC ok)</text>
+<text x="768.0" y="274.1" font-size="10.3" font-weight="700" fill="#2b7bba">PREVENTED</text>
+<text x="768.0" y="288.4" font-size="9.5" fill="#33373d">defense-in-depth (execution not forced)</text>
+<rect x="16" y="324" width="1116" height="70" rx="8" fill="#1a1030" stroke="#7b52ab"/>
+<text x="30" y="345" font-size="12" font-weight="700" fill="#d9c7ff">Result — detection blind spot, prevention success</text>
+<text x="30" y="362" font-size="10.3" fill="#efe9ff">A/B contrast: the same SMB auth from the ATTACK zone fires 99920 L14 (PB-013/015/016); intra-TARGET peer-to-peer it is silent.</text>
+<text x="30" y="377" font-size="10.3" fill="#efe9ff">The valid-cred hop evaded detection, but the pivot was blocked by host firewall + local-account token filtering. The detection gap → closed by OP-004 D2.</text>
+</svg>

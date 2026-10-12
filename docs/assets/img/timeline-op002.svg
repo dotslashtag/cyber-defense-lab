@@ -1,0 +1,103 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1172 411" font-family="Segoe UI, Arial, sans-serif">
+<rect x="0" y="0" width="1172" height="411" fill="#ffffff"/>
+<text x="16" y="32" font-size="21" font-weight="700" fill="#1a1a1a">OP-002 Stealth Tradecraft Variant — Master Timeline</text>
+<text x="16" y="52" font-size="11.5" fill="#555">run op002-2d4967db · 2026-09-25→28 · WIN11-OPS01 (10.10.2.9) agent 010 as SOC\ops01, paw kyftry · stealth variant, assumed-breach</text>
+<rect x="16.0" y="67" width="15" height="15" rx="3" fill="#2b7bba"/>
+<text x="36.0" y="79" font-size="11.5" fill="#1a1a1a">Prevented</text>
+<rect x="113.0" y="67" width="15" height="15" rx="3" fill="#2e8b57"/>
+<text x="133.0" y="79" font-size="11.5" fill="#1a1a1a">Alerted</text>
+<rect x="196.0" y="67" width="15" height="15" rx="3" fill="#e0a800"/>
+<text x="216.0" y="79" font-size="11.5" fill="#1a1a1a">Logged-only</text>
+<rect x="307.0" y="67" width="15" height="15" rx="3" fill="#c0392b"/>
+<text x="327.0" y="79" font-size="11.5" fill="#1a1a1a">Missed</text>
+<text x="399.0" y="79" font-size="10.5" fill="#888">kill-chain order &#8594;</text>
+<rect x="16.0" y="108" width="182" height="46" rx="6" fill="#2b7bba"/>
+<text x="107.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Execution</text>
+<text x="107.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1059.001</text>
+<rect x="16.0" y="158" width="182" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="24.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="24.0" y="187.5" font-size="8.7" fill="#33373d">Sandcat delivery (group</text>
+<text x="24.0" y="201.0" font-size="8.7" fill="#33373d">op002 as SOC\ops01)</text>
+<text x="24.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="24.0" y="228.0" font-size="8.7" fill="#33373d">Defender 1116/1117 →</text>
+<text x="24.0" y="241.5" font-size="8.7" fill="#33373d">Wazuh 62123 L12 / 62124</text>
+<text x="24.0" y="255.0" font-size="9.5" font-weight="700" fill="#2b7bba">PREVENTED</text>
+<text x="24.0" y="268.5" font-size="8.7" fill="#33373d">fresh endpoint; placed via</text>
+<text x="24.0" y="282.0" font-size="8.7" fill="#33373d">assumed-breach exception</text>
+<text x="202.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="206.0" y="108" width="182" height="46" rx="6" fill="#c0392b"/>
+<text x="297.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Discovery</text>
+<text x="297.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1082 · T1057</text>
+<rect x="206.0" y="158" width="182" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="214.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="214.0" y="187.5" font-size="8.7" fill="#33373d">2a cmd (ver, tasklist|</text>
+<text x="214.0" y="201.0" font-size="8.7" fill="#33373d">findstr lsass) · 2b native</text>
+<text x="214.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="214.0" y="228.0" font-size="8.7" fill="#33373d">2a → 92052 L4 ×2;</text>
+<text x="214.0" y="241.5" font-size="8.7" fill="#33373d">2b → 0 (no 100502/92052)</text>
+<text x="214.0" y="255.0" font-size="9.5" font-weight="700" fill="#c0392b">MISSED (native 2b)</text>
+<text x="214.0" y="268.5" font-size="8.7" fill="#33373d">2a cmd Alerted; tradecraft</text>
+<text x="214.0" y="282.0" font-size="8.7" fill="#33373d">not intent → OP-004 D1</text>
+<text x="392.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="396.0" y="108" width="182" height="46" rx="6" fill="#2e8b57"/>
+<text x="487.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Persistence</text>
+<text x="487.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1547.001</text>
+<rect x="396.0" y="158" width="182" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="404.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="404.0" y="187.5" font-size="8.7" fill="#33373d">reg add …Run\OP002Persist</text>
+<text x="404.0" y="201.0" font-size="8.7" fill="#33373d">+ PS …OP002PersistPS</text>
+<text x="404.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="404.0" y="228.0" font-size="8.7" fill="#33373d">Wazuh 92302 L6 (reg.exe)</text>
+<text x="404.0" y="241.5" font-size="8.7" fill="#33373d">+ 510150 L10 (powershell);</text>
+<text x="404.0" y="255.0" font-size="8.7" fill="#33373d">Splunk rule fired ×3</text>
+<text x="404.0" y="268.5" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED (both writers)</text>
+<text x="404.0" y="282.0" font-size="8.7" fill="#33373d">stealth premise failed</text>
+<text x="582.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="586.0" y="108" width="182" height="46" rx="6" fill="#2e8b57"/>
+<text x="677.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Command &amp; Control</text>
+<text x="677.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1071.001</text>
+<rect x="586.0" y="158" width="182" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="594.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="594.0" y="187.5" font-size="8.7" fill="#33373d">C2 → 10.10.3.4:8888</text>
+<text x="594.0" y="201.0" font-size="8.7" fill="#33373d">~14 beacons / ~15 min</text>
+<text x="594.0" y="214.5" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="594.0" y="228.0" font-size="8.7" fill="#33373d">100502 L13 08:49:49 +</text>
+<text x="594.0" y="241.5" font-size="8.7" fill="#33373d">510144 L12 08:49:52;</text>
+<text x="594.0" y="255.0" font-size="8.7" fill="#33373d">nothing after</text>
+<text x="594.0" y="268.5" font-size="9.5" font-weight="700" fill="#2e8b57">ALERTED at check-in</text>
+<text x="594.0" y="282.0" font-size="8.7" fill="#33373d">sustained channel SILENT</text>
+<text x="594.0" y="295.5" font-size="8.7" fill="#33373d">(1 TCP keep-alive)</text>
+<text x="772.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="776.0" y="108" width="182" height="46" rx="6" fill="#e0a800"/>
+<text x="867.0" y="127" font-size="12" font-weight="700" fill="#1a1a1a" text-anchor="middle">Collection</text>
+<text x="867.0" y="143" font-size="9.5" fill="#1a1a1a" text-anchor="middle">T1005</text>
+<rect x="776.0" y="158" width="182" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="784.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="784.0" y="187.5" font-size="8.7" fill="#33373d">stage op002 files →</text>
+<text x="784.0" y="201.0" font-size="8.7" fill="#33373d">loot.zip off-canary</text>
+<text x="784.0" y="214.5" font-size="8.7" fill="#33373d">(…Temp\op002-collect)</text>
+<text x="784.0" y="228.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="784.0" y="241.5" font-size="8.7" fill="#33373d">554/550/553 FIM = 0;</text>
+<text x="784.0" y="255.0" font-size="8.7" fill="#33373d">level≥12 = 0; only 4104</text>
+<text x="784.0" y="268.5" font-size="9.5" font-weight="700" fill="#e0a800">LOGGED-ONLY</text>
+<text x="784.0" y="282.0" font-size="8.7" fill="#33373d">canary FIM is path-blind</text>
+<text x="962.0" y="136" font-size="16" fill="#bbb" text-anchor="middle">&#8594;</text>
+<rect x="966.0" y="108" width="182" height="46" rx="6" fill="#c0392b"/>
+<text x="1057.0" y="127" font-size="12" font-weight="700" fill="#ffffff" text-anchor="middle">Exfiltration</text>
+<text x="1057.0" y="143" font-size="9.5" fill="#ffffff" text-anchor="middle">T1041</text>
+<rect x="966.0" y="158" width="182" height="159.0" rx="6" fill="#f7f8fa" stroke="#d7dbe0"/>
+<text x="974.0" y="174.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">ACTION</text>
+<text x="974.0" y="187.5" font-size="8.7" fill="#33373d">Invoke-WebRequest PUT</text>
+<text x="974.0" y="201.0" font-size="8.7" fill="#33373d">loot.zip → 10.10.3.5:8083</text>
+<text x="974.0" y="214.5" font-size="8.7" fill="#33373d">(non-CDB)</text>
+<text x="974.0" y="228.0" font-size="8" font-weight="700" fill="#8a8f98" letter-spacing="0.5">SIGNAL</text>
+<text x="974.0" y="241.5" font-size="8.7" fill="#33373d">510144 = 0; level≥12 = 0;</text>
+<text x="974.0" y="255.0" font-size="8.7" fill="#33373d">Sysmon 3 in archives only</text>
+<text x="974.0" y="268.5" font-size="9.5" font-weight="700" fill="#c0392b">MISSED</text>
+<text x="974.0" y="282.0" font-size="8.7" fill="#33373d">IOC-list dependence</text>
+<text x="974.0" y="295.5" font-size="8.7" fill="#33373d">(same bytes as PB-019)</text>
+<rect x="16" y="331" width="1140" height="70" rx="8" fill="#1a1030" stroke="#7b52ab"/>
+<text x="30" y="352" font-size="12" font-weight="700" fill="#d9c7ff">Marquee finding — Phase 6 (IOC-list dependence)</text>
+<text x="30" y="369" font-size="10.3" fill="#efe9ff">Exfil identical to PB-019 — only the destination IP changed (non-CDB 10.10.3.5:8083) — yet detection flipped from a guaranteed 510144 L12 to total silence.</text>
+<text x="30" y="384" font-size="10.3" fill="#efe9ff">Detection was bound to the IOC list, not the behaviour. This gap (and the native-discovery miss in Phase 2) is what motivated OP-004.</text>
+</svg>

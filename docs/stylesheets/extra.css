@@ -1,0 +1,128 @@
+/* Brand colours: deep teal on slate, with amber for "found it" accents. */
+:root {
+  --md-typeset-a-color: #0f766e;
+  --md-primary-fg-color: #0f3d3e;
+  --md-primary-fg-color--light: #1d5c5d;
+  --md-primary-fg-color--dark: #0a2a2b;
+  --md-accent-fg-color: #0d9488;
+  --cdl-ok: #2e8b57;
+  --cdl-prevent: #2b7bbf;
+  --cdl-logged: #d4a017;
+  --cdl-missed: #c0392b;
+  --cdl-closed: #7b52ab;
+  --cdl-tile-bg: #f4f7f7;
+  --cdl-tile-border: #d9e3e3;
+}
+[data-md-color-scheme="slate"] {
+  --md-primary-fg-color: #0b2e2f;
+  --md-accent-fg-color: #2dd4bf;
+  --md-typeset-a-color: #5eead4;
+  --cdl-tile-bg: #1e2a32;
+  --cdl-tile-border: #2f3e48;
+}
+
+/* ---------- Landing hero ---------- */
+.cdl-hero {
+  margin: -0.8rem -0.8rem 1.6rem;
+  padding: 2.6rem 1.6rem 2.2rem;
+  border-radius: 0 0 14px 14px;
+  background: radial-gradient(circle at 85% 20%, rgba(45, 212, 191, .28), transparent 45%),
+              linear-gradient(135deg, #0a2a2b 0%, #0f3d3e 55%, #134e4a 100%);
+  color: #e6fffb;
+}
+.cdl-hero h1 {
+  color: #ffffff;
+  font-weight: 800;
+  margin: 0 0 .4rem;
+  font-size: clamp(1.45rem, 5vw, 2.1rem);
+  line-height: 1.2;
+  letter-spacing: -.01em;
+}
+.cdl-hero .cdl-kicker {
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  font-size: .68rem;
+  font-weight: 700;
+  color: #5eead4;
+  margin: 0 0 .5rem;
+}
+.cdl-hero p { font-size: .9rem; max-width: 46rem; color: #d5f5f0; }
+.cdl-hero .md-button { margin: .3rem .4rem 0 0; color: #ffffff; border-color: #5eead4; }
+.cdl-hero .md-button--primary { background: #0d9488; border-color: #0d9488; }
+.cdl-hero .md-button:hover { background: #14b8a6; border-color: #14b8a6; color: #04201f; }
+
+/* ---------- Stat tiles ---------- */
+.cdl-stats {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(7.5rem, 1fr));
+  gap: .8rem;
+  margin: 1rem 0 1.6rem;
+}
+.cdl-stat {
+  background: var(--cdl-tile-bg);
+  border: 1px solid var(--cdl-tile-border);
+  border-radius: 10px;
+  padding: .8rem .9rem;
+}
+.cdl-stat .n { font-size: 1.7rem; font-weight: 800; line-height: 1.1; color: var(--md-accent-fg-color); }
+.cdl-stat .l { font-size: .68rem; line-height: 1.35; opacity: .85; }
+
+/* ---------- Before / after strip ---------- */
+.cdl-ba {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr));
+  gap: .8rem;
+  margin: 1rem 0 1.4rem;
+}
+.cdl-ba > div {
+  border: 1px solid var(--cdl-tile-border);
+  border-left: 5px solid var(--cdl-ok);
+  border-radius: 8px;
+  padding: .7rem .9rem;
+  background: var(--cdl-tile-bg);
+  font-size: .72rem;
+}
+.cdl-ba p { margin: 0 0 .35rem; }
+.cdl-ba p:last-child { margin-bottom: 0; }
+.cdl-ba strong { font-size: .8rem; }
+.cdl-pill {
+  display: inline-block;
+  padding: .05rem .45rem;
+  border-radius: 999px;
+  font-size: .62rem;
+  font-weight: 700;
+  color: #fff;
+  vertical-align: middle;
+}
+.cdl-pill.missed { background: var(--cdl-missed); }
+.cdl-pill.alerted { background: var(--cdl-ok); }
+.cdl-pill.logged { background: var(--cdl-logged); color: #1a1a1a; }
+.cdl-pill.prevented { background: var(--cdl-prevent); }
+
+/* ---------- Figures ---------- */
+.md-typeset figure { margin: 1.2rem auto; }
+.md-typeset figure img {
+  border: 1px solid var(--cdl-tile-border);
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, .08);
+}
+.md-typeset figcaption { font-size: .68rem; max-width: 46rem; margin: .4rem auto 0; opacity: .9; }
+.md-typeset figure.cdl-wide { width: 100%; max-width: 100%; }
+.cdl-wide img { width: 100%; height: auto; background: #fff; }
+
+/* ---------- Grid cards polish ---------- */
+.md-typeset .grid.cards > ul > li { border-radius: 10px; transition: border-color .15s, box-shadow .15s; }
+.md-typeset .grid.cards > ul > li:hover { border-color: var(--md-accent-fg-color); box-shadow: 0 4px 16px rgba(13, 148, 136, .15); }
+
+/* Tables: keep wide tables scrollable on phones */
+.md-typeset__table { max-width: 100%; }
+
+/* Four Explore cards as a 2 x 2 grid on wide screens */
+.md-typeset .grid.cdl-two {
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 24rem), 1fr));
+}
+/* Outline buttons readable in dark mode */
+[data-md-color-scheme="slate"] .md-typeset .md-button:not(.md-button--primary) {
+  color: #5eead4;
+  border-color: #2dd4bf;
+}
