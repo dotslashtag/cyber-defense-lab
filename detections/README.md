@@ -30,6 +30,12 @@ detections/
 | Run/RunOnce key written by a script host or LOLBin (**D3**) | T1547.001 | | ✅ | ✅ | OP-004 |
 | Clustered native discovery (**D1**) | T1033, T1082, T1016, T1057, T1087, T1018 | | ✅ | ✅ (correlation) | OP-002 → OP-004 |
 | Workstation-to-workstation logon (**D2**) | T1021.002, T1550.002, T1078 | | ✅ | ✅ | OP-003 → OP-004 |
+| Brute force / password spray from a known-bad IP (CDB-enriched) | T1110.001, T1110.003 | `510120`, `510121` | | | PB-001/002 |
+| Brute force, no IOC needed | T1110.001 | `510123`, `510130` | | | PB-001/002 |
+| Password spray by volume | T1110.003 | `510131` | | | PB-002 |
+| Successful logon after brute force | T1110.001, T1078 | `510132` | | | PB-001 |
+| Repeated failures labelled lateral movement | T1021 | `510133` | | | PB-002 |
+| AD account lockout (4740, user accounts only) | T1110 | `510122` | | | PB-001/002 |
 
 ## Run the tests
 
@@ -54,11 +60,28 @@ sigma convert -t splunk detections/sigma/windows/proc_creation_rundll32_spawned_
 - **Wazuh:** rule IDs, structure and ATT&CK tags are checked, and each rule's own
   field patterns are run against sample alerts. The parent rule (`if_sid`) and the
   decoder are not run here; that needs a Wazuh manager (`wazuh-logtest`). The
-  IOC-list rule `510144` can only be tested on the manager.
+  IOC-list rule `510144` and the frequency/correlation rules (`510120`–`510121`,
+  `510123`, `510130`–`510133`) can only be tested on the manager. `910001` is an n8n
+  pipeline test marker, not a detection.
 - **Splunk:** the `.spl` files are the searches deployed in the lab, validated
   there against live data (see OP-004). They are not executed in CI.
 - Sample events are representative events based on the lab's validation runs, not raw
   log exports.
+
+## Wazuh rule review
+
+`wazuh/local_rules.xml` is the lab's live file. Reading it closely found these
+issues; they are documented here rather than changed, because each fix needs
+validating on the manager with `wazuh-logtest` first.
+
+| Rule | Issue | Suggested fix |
+|---|---|---|
+| `510132` "Successful login after brute force" (L14) | Nothing in the rule checks that the current event **is a successful logon**. It only requires a prior `510130` and the same source IP within 10 minutes, so further failures from that IP could raise a "credential compromise" alert | Make it a child of the successful-logon (4624) rule with `if_sid`, keep `if_matched_sid 510130` + `same_srcip` |
+| `510133` "Lateral movement attempt" (T1021) | Same trigger as `510130`/`510131` (failed logons from one IP) with a lower bar of 3 in 5 minutes; nothing checks workstation → server. It is a "3 failures" rule with a lateral-movement label, the same mislabel problem fixed in D3 | Rename and re-tag as low-severity brute-force precursor, or add a real workstation-source condition |
+| `510131` "Password spray" | Counts failures from one IP but does not require **different users** (unlike `510121`, which uses `different_user`); its group also includes `lateral_movement` | Add `<different_user />`; drop the `lateral_movement` group |
+| `510120`/`510123` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts | Check in the lab which fire together; keep one family or chain them |
+| `510143` | Parent must be `powershell.exe`; `pwsh.exe` (PowerShell 7) is missed | `(?i)\\(powershell\|pwsh)\.exe$` |
+| `510140` | Only matches the full `-ExecutionPolicy`; `-ep bypass` / `-exec bypass` slip past | Use the Sigma version's pattern `(?i)\s[-/](ep\|ex[a-z]*)\s+bypass` |
 
 ## Tuning notes on the deployed D3 search
 
