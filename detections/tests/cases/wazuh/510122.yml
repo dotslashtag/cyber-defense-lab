@@ -1,0 +1,23 @@
+positive:
+  - description: Domain user locked out after repeated failures (Event 4740)
+    event:
+      win:
+        system:
+          eventID: '4740'
+        eventdata:
+          targetUserName: 'labuser'
+negative:
+  - description: Machine account lockout (name ends in $) is skipped
+    event:
+      win:
+        system:
+          eventID: '4740'
+        eventdata:
+          targetUserName: 'WIN11-OPS01$'
+  - description: A failed logon (4625) is not a lockout
+    event:
+      win:
+        system:
+          eventID: '4625'
+        eventdata:
+          targetUserName: 'labuser'

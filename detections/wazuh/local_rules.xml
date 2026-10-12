@@ -1,16 +1,104 @@
 <!--
-  Cyber Defense Lab - Wazuh custom rules (local range 510100-510199)
-
-  Rules 510140-510144 are copied from the lab playbooks. Rule 510150 was rebuilt
-  from the lab notes (parent, writer pattern, level and ATT&CK ID are as recorded);
-  its description wording may differ from the deployed rule.
-  Each rule narrows a stock Wazuh/SOCFortress parent rule (if_sid) to a specific
-  attacker behaviour and was validated with a controlled emulation (see PB-xxx).
+  Cyber Defense Lab - Wazuh custom rules.
+  Exported from the lab manager's /var/ossec/etc/rules/local_rules.xml on 2026-10-12
+  and published unchanged apart from this header. Review notes and known issues:
+  detections/README.md ("Wazuh rule review").
 -->
-<group name="local,soc_lab,">
+<group name="local,">
 
-  <!-- PB-003: PowerShell launched with -ExecutionPolicy Bypass.
-       Parent 92027 = Sysmon process creation of PowerShell. -->
+  <rule id="910001" level="10">
+    <match>SOC_N8N_PIPELINE_TEST</match>
+    <description>SOC lab n8n integration validation</description>
+    <group>soc_test,</group>
+  </rule>
+
+  <!-- Brute force from malicious IP (enriched by 99919) -->
+  <rule id="510120" level="12" frequency="5" timeframe="60">
+    <if_matched_sid>99919</if_matched_sid>
+    <same_source_ip />
+    <description>Brute force from malicious IP $(win.eventdata.ipAddress) - $(frequency) attempts/60s.</description>
+    <group>brute_force,authentication_failed,windows,</group>
+    <mitre><id>T1110.001</id></mitre>
+  </rule>
+
+  <!-- Password spray from malicious IP -->
+  <rule id="510121" level="14" frequency="10" timeframe="60">
+    <if_matched_sid>99919</if_matched_sid>
+    <different_user />
+    <description>Password spray from malicious IP $(win.eventdata.ipAddress) - $(frequency) users targeted.</description>
+    <group>password_spray,authentication_failed,windows,</group>
+    <mitre><id>T1110.003</id></mitre>
+  </rule>
+
+  <!-- Brute force fallback (no CDB requirement) -->
+  <rule id="510123" level="12" frequency="5" timeframe="60">
+    <if_matched_sid>60105</if_matched_sid>
+    <same_source_ip />
+    <description>Brute force attack - $(frequency) failed logons from same IP.</description>
+    <group>brute_force,authentication_failed,windows,</group>
+    <mitre><id>T1110.001</id></mitre>
+  </rule>
+
+  <!-- Account lockout — EID 4740 only, skip machine accounts ending in $ -->
+  <rule id="510122" level="12">
+    <if_sid>60106</if_sid>
+    <field name="win.system.eventID">^4740$</field>
+    <field name="win.eventdata.targetUserName" negate="yes">\$$</field>
+    <description>Active Directory account lockout: $(win.eventdata.targetUserName).</description>
+    <group>account_lockout,authentication_failed,windows,</group>
+    <mitre>
+      <id>T1110</id>
+    </mitre>
+  </rule>
+
+  <!-- ═══ BEHAVIOR-BASED BRUTE FORCE (NO CDB DEPENDENCY) ═══ -->
+
+  <!-- Internal brute force: 8+ failed logons from same IP in 120s -->
+  <rule id="510130" level="12" frequency="8" timeframe="120">
+    <if_matched_sid>60122</if_matched_sid>
+    <same_srcip />
+    <description>Behavior: Brute force detected — $(srcip) → 8+ failures in 2 min</description>
+    <group>brute_force,behavior_based,</group>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+  </rule>
+
+  <!-- Password spray: 10+ failures from same IP in 300s (high volume = likely multiple users) -->
+  <rule id="510131" level="13" frequency="10" timeframe="300">
+    <if_matched_sid>60122</if_matched_sid>
+    <same_srcip />
+    <description>Behavior: Likely password spray — $(srcip) → 10+ failures in 5 min (possible multi-user targeting)</description>
+    <group>password_spray,behavior_based,lateral_movement,</group>
+    <mitre>
+      <id>T1110.003</id>
+    </mitre>
+  </rule>
+
+  <!-- CRITICAL: Successful login AFTER brute force from same source -->
+  <rule id="510132" level="14" timeframe="600">
+    <if_matched_sid>510130</if_matched_sid>
+    <same_srcip />
+    <description>CRITICAL: Successful login after brute force from $(srcip) — credential compromise</description>
+    <group>brute_force,credential_access,behavior_based,</group>
+    <mitre>
+      <id>T1110.001</id>
+      <id>T1078</id>
+    </mitre>
+  </rule>
+
+  <!-- Workstation-to-server auth failures: lateral movement indicator -->
+  <rule id="510133" level="12" frequency="3" timeframe="300">
+    <if_matched_sid>60122</if_matched_sid>
+    <same_srcip />
+    <description>Behavior: Repeated auth failures from workstation — lateral movement attempt</description>
+    <group>lateral_movement,behavior_based,</group>
+    <mitre>
+      <id>T1021</id>
+    </mitre>
+  </rule>
+
+  <!-- PB-003: PowerShell launched with ExecutionPolicy Bypass -->
   <rule id="510140" level="10">
     <if_sid>92027</if_sid>
     <field name="win.eventdata.commandLine" type="pcre2">(?i)-executionpolicy\s+bypass</field>
@@ -21,7 +109,7 @@
     </mitre>
   </rule>
 
-  <!-- PB-005 / OP-001 Phase 2: Defender Tamper Protection blocked a change (Event 5013). -->
+  <!-- PB-005: Microsoft Defender Tamper Protection blocked a change -->
   <rule id="510142" level="12">
     <if_sid>62100</if_sid>
     <field name="win.system.providerName">^Microsoft-Windows-Windows Defender$</field>
@@ -33,7 +121,7 @@
     </mitre>
   </rule>
 
-  <!-- PB-009: rundll32 spawned by PowerShell (signed binary proxy execution). -->
+  <!-- PB-009: Rundll32 launched from PowerShell -->
   <rule id="510143" level="10">
     <if_sid>100100</if_sid>
     <field name="win.eventdata.image" type="pcre2">(?i)\\rundll32\.exe$</field>
@@ -46,8 +134,7 @@
     </mitre>
   </rule>
 
-  <!-- PB-010 / PB-017 / PB-019: network connection to an IP on the lab's IOC list.
-       Deliberately no ATT&CK ID: an IOC match alone does not prove a technique. -->
+  <!-- PB-010: Connection to a controlled IOC IP -->
   <rule id="510144" level="12">
     <if_sid>102503</if_sid>
     <list field="win.eventdata.destinationIp" lookup="address_match_key">etc/lists/pb010-controlled-ioc-ip</list>
@@ -55,18 +142,22 @@
     <group>network_connection,threat_intelligence,windows,</group>
   </rule>
 
-  <!-- PB-012 / OP-001 / OP-002: Run/RunOnce key written by a script host.
-       Parent 92300 is the silent (level 0) Sysmon Event 13 Run-key rule; the stock
-       children only escalate for reg.exe or .lnk/.vbs targets, so a PowerShell
-       writer was missed until this rule was added. -->
+</group>
+
+<group name="local,sysmon,persistence,">
+  <!-- PB-012 fix: SOCFortress EID13 pack escalates Run-key writes only for
+       reg.exe (92302) or script/RAT target files (92301/92303). A script-host
+       writer (powershell/wscript/cscript/mshta) pointing at a plain .exe stays
+       at 92300 L0 = silent. OP-001's powershell persistence hit exactly this
+       hole; Splunk's script-host rule compensated. This restores it natively. -->
   <rule id="510150" level="10">
     <if_sid>92300</if_sid>
     <field name="win.eventdata.image" type="pcre2">(?i)\\(powershell|pwsh|wscript|cscript|mshta)\.exe$</field>
-    <description>Run/RunOnce key modified by script host $(win.eventdata.image).</description>
-    <group>registry,persistence,windows,</group>
+    <options>no_full_log</options>
+    <description>Persistence: Run/RunOnce key set by script host $(win.eventdata.image) (T1547.001)</description>
     <mitre>
       <id>T1547.001</id>
     </mitre>
+    <group>persistence,registry_run_key,scripthost,</group>
   </rule>
-
 </group>

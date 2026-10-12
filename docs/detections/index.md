@@ -67,6 +67,7 @@ minutes. See [Results](../operations/results.md).
 | Defender Tamper Protection blocked a change | T1562.001 | Wazuh `510142` · Sigma | PB-005 · OP-001 |
 | Rundll32 spawned by PowerShell | T1218.011 | Wazuh `510143` · Sigma | PB-009 |
 | Connection to a controlled IOC IP | (none on purpose) | Wazuh `510144` | PB-010 · PB-017 · PB-019 |
+| Brute force, password spray, lockout, success-after-brute-force | T1110.001 · T1110.003 · T1078 | Wazuh `510120`–`510123`, `510130`–`510133` | PB-001 · PB-002 |
 
 ## Example: D2 in Sigma
 
@@ -97,6 +98,13 @@ controller, a loopback logon, a console logon and a failed logon must not.
   an ATT&CK tag, and their field patterns are run against sample alerts.
 - To show the tests catch mistakes, I broke rules on purpose (dropped an
   exclusion, raised a threshold, changed a process name). Each change made a test fail.
+
+!!! warning "Known issues I found in my own rules"
+    Publishing the live Wazuh file meant reading it line by line. Two rules don't do
+    what their names say: `510132` ("successful login after brute force") never
+    checks for a successful logon, and `510133` ("lateral movement") is really a
+    three-failed-logons rule. Both, and four smaller issues, are written up with
+    fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).
 
 !!! note "Limits"
     D2's workstation list is hard-coded to the two hosts used in OP-003; the lab's

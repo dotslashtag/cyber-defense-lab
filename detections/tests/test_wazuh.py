@@ -1,8 +1,9 @@
 """Wazuh local rules: structure checks plus field-pattern tests on sample alerts.
 
-The parent rule (if_sid) and the decoder are not run here; that needs a Wazuh
-manager (wazuh-logtest). These tests check that each rule's own field patterns
-fire on the attack sample and stay quiet on the benign one.
+The parent rule (if_sid), the decoder and frequency/correlation logic are not run
+here; that needs a Wazuh manager (wazuh-logtest). For single-event rules, these
+tests check that the rule's own field patterns fire on the attack sample and stay
+quiet on the benign one.
 """
 
 import re
@@ -14,13 +15,28 @@ from detection_helpers import WAZUH_RULES, load_cases
 
 CASES = load_cases("wazuh")
 LOCAL_RANGE = range(510100, 510200)
+# Rules outside the detection range on purpose.
+EXTRA_IDS = {"910001": "n8n pipeline test marker, not a detection"}
 
 # Rules with no ATT&CK ID on purpose.
-NO_MITRE = {"510144": "an IOC match alone does not prove a technique"}
+NO_MITRE = {
+    "510144": "an IOC match alone does not prove a technique",
+    "910001": "pipeline test marker",
+}
 # Rules whose logic cannot be checked offline.
-OFFLINE_UNTESTABLE = {"510144": "matches against a Wazuh CDB list on the manager"}
+_CORRELATION = "frequency/correlation rule: needs a sequence of events on a Wazuh manager"
+OFFLINE_UNTESTABLE = {
+    "510144": "matches against a Wazuh CDB list on the manager",
+    "910001": "pipeline test marker",
+    **{rid: _CORRELATION for rid in
+       ("510120", "510121", "510123", "510130", "510131", "510132", "510133")},
+}
 
-RULES = ET.parse(WAZUH_RULES).getroot().findall(".//rule")
+# A Wazuh rules file may hold several top-level <group> elements, so wrap it
+# before parsing.
+_TEXT = WAZUH_RULES.read_text(encoding="utf-8")
+_TEXT = re.sub(r"^\s*<!--.*?-->", "", _TEXT, count=1, flags=re.S)
+RULES = ET.fromstring(f"<rules>{_TEXT}</rules>").findall(".//rule")
 
 
 def test_rules_present():
@@ -28,16 +44,20 @@ def test_rules_present():
 
 
 def test_rule_ids_unique_and_in_local_range():
-    ids = [int(r.get("id")) for r in RULES]
+    ids = [r.get("id") for r in RULES]
     assert len(ids) == len(set(ids)), "duplicate rule IDs"
-    assert all(i in LOCAL_RANGE for i in ids), "rule ID outside the lab's local range"
+    outside = [i for i in ids if int(i) not in LOCAL_RANGE and i not in EXTRA_IDS]
+    assert not outside, f"rule IDs outside the lab's local range: {outside}"
 
 
 @pytest.mark.parametrize("rule", RULES, ids=lambda r: r.get("id"))
 def test_rule_structure(rule):
     rid = rule.get("id")
     assert rule.findtext("description", "").strip(), f"{rid}: no description"
-    assert rule.findtext("if_sid"), f"{rid}: should narrow a parent rule with if_sid"
+    if rid not in EXTRA_IDS:
+        assert rule.findtext("if_sid") or rule.findtext("if_matched_sid"), (
+            f"{rid}: should build on a parent rule (if_sid or if_matched_sid)"
+        )
     if rid not in NO_MITRE:
         assert rule.findall("mitre/id"), f"{rid}: no ATT&CK ID"
     if rid not in OFFLINE_UNTESTABLE:
@@ -58,7 +78,10 @@ def _get(event, dotted):
 def _fires(rule, event):
     for field in rule.findall("field"):
         value = _get(event, field.get("name"))
-        if value is None or not re.search(field.text, str(value)):
+        hit = value is not None and re.search(field.text, str(value)) is not None
+        if field.get("negate") == "yes":
+            hit = value is not None and not hit
+        if not hit:
             return False
     return True
 
