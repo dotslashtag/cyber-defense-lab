@@ -1,10 +1,11 @@
 # About
 
-I'm **dotslashtag**, working toward SOC analyst, detection engineering and
+I'm **Joseph Henry Cariazo** (`dotslashtag` on GitHub), working toward SOC analyst, detection engineering and
 security automation roles. This lab is where I practise the whole loop: collect
 the right telemetry, emulate a real intruder, score honestly what was caught and
 what wasn't, fix the gaps, and prove the fix with a cold re-run.
 
+[:fontawesome-brands-linkedin: LinkedIn](https://www.linkedin.com/in/jhrcariazo){ .md-button .md-button--primary }
 [:fontawesome-brands-github: GitHub](https://github.com/dotslashtag){ .md-button }
 
 ## What I can show you

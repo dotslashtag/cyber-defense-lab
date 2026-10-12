@@ -1,6 +1,6 @@
 site_name: Cyber Defense Lab
-site_description: Home SOC lab portfolio — detection engineering, purple-team operations, SOAR, and SOC analyzer tools.
-site_author: dotslashtag
+site_description: Joseph Henry Cariazo's home SOC lab portfolio — detection engineering, purple-team operations, SOAR, and SOC analyzer tools.
+site_author: Joseph Henry Cariazo
 site_url: https://dotslashtag.github.io/cyber-defense-lab/
 repo_url: https://github.com/dotslashtag/cyber-defense-lab
 repo_name: dotslashtag/cyber-defense-lab
@@ -52,12 +52,15 @@ plugins:
 
 extra:
   social:
+    - icon: fontawesome/brands/linkedin
+      link: https://www.linkedin.com/in/jhrcariazo
+      name: LinkedIn
     - icon: fontawesome/brands/github
       link: https://github.com/dotslashtag
       name: GitHub
   generator: false
 
-copyright: Built and operated by dotslashtag · Lab content is from an isolated, authorized home lab
+copyright: Built and operated by Joseph Henry Cariazo · Lab content is from an isolated, authorized home lab
 
 markdown_extensions:
   - admonition

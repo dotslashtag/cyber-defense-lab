@@ -7,7 +7,7 @@ hide:
 
 <div class="cdl-hero" markdown>
 
-<p class="cdl-kicker">SOC analyst · detection engineering · security automation</p>
+<p class="cdl-kicker">Joseph Henry Cariazo · SOC analyst · detection engineering · security automation</p>
 
 # I build a SOC, attack it, and fix what it misses.
 
@@ -18,6 +18,7 @@ becomes a detection, and every detection is tested and re-run blind.
 [See the results](operations/results.md){ .md-button .md-button--primary }
 [Read a case](casebook/op-002-stealth-tradecraft.md){ .md-button }
 [Browse the code](https://github.com/dotslashtag/cyber-defense-lab){ .md-button }
+[:fontawesome-brands-linkedin: LinkedIn](https://www.linkedin.com/in/jhrcariazo){ .md-button }
 
 </div>
 
