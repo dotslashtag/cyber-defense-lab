@@ -27,7 +27,7 @@ detections/
 | Rundll32 spawned by PowerShell | T1218.011 | `510143` | | ✅ | PB-009 |
 | Connection to a controlled IOC IP | (none on purpose) | `510144` | | | PB-010/017/019 |
 | Run/RunOnce key written by a script host | T1547.001 | `510150` | | | PB-012, OP-001/002 |
-| Run/RunOnce key written by a script host or LOLBin (**D3**) | T1547.001 | | ⏳ export | ✅ | OP-004 |
+| Run/RunOnce key written by a script host or LOLBin (**D3**) | T1547.001 | | ✅ | ✅ | OP-004 |
 | Clustered native discovery (**D1**) | T1033, T1082, T1016, T1057, T1087, T1018 | | ✅ | ✅ (correlation) | OP-002 → OP-004 |
 | Workstation-to-workstation logon (**D2**) | T1021.002, T1550.002, T1078 | | ✅ | ✅ | OP-003 → OP-004 |
 
@@ -59,6 +59,21 @@ sigma convert -t splunk detections/sigma/windows/proc_creation_rundll32_spawned_
   there against live data (see OP-004). They are not executed in CI.
 - Sample events are representative events based on the lab's validation runs, not raw
   log exports.
+
+## Tuning notes on the deployed D3 search
+
+Comparing the exported D3 SPL with its Sigma version found three things to fix in
+the lab (tracked in the lab's owner checklist):
+
+1. **Key match is too loose.** `like(target, "%currentversion%run%")` also matches
+   `Explorer\RunMRU` (Win+R history) and `Uninstall` entries with "Run" in the name.
+   The Sigma version lists the Run-style keys explicitly, ending in a backslash.
+2. **`dedup event_record_id` can drop real events.** Record IDs are only unique per
+   host and channel, so two hosts can share one. Dedup on host plus record ID.
+3. **No host in the output.** Add the agent name so triage starts with *which machine*.
+
+The deployed search is published unchanged in `splunk/`; the Sigma rule already
+has the fixes and tests for 1.
 
 ## Adding a detection
 

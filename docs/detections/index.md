@@ -61,7 +61,7 @@ minutes. See [Results](../operations/results.md).
 |---|---|---|---|
 | Clustered native discovery (D1) | T1033 · T1082 · T1016 · T1057 · T1087 · T1018 | Splunk · Sigma correlation | OP-002 → OP-004 |
 | Workstation-to-workstation logon (D2) | T1021.002 · T1550.002 · T1078 | Splunk · Sigma | OP-003 → OP-004 |
-| Run/RunOnce key written by script host or LOLBin (D3) | T1547.001 | Sigma (Splunk export pending) | OP-002 → OP-004 |
+| Run/RunOnce key written by script host or LOLBin (D3) | T1547.001 | Splunk · Sigma | OP-002 → OP-004 |
 | Run/RunOnce key written by a script host | T1547.001 | Wazuh `510150` | PB-012 · OP-001 |
 | PowerShell with ExecutionPolicy Bypass | T1059.001 | Wazuh `510140` · Sigma | PB-003 |
 | Defender Tamper Protection blocked a change | T1562.001 | Wazuh `510142` · Sigma | PB-005 · OP-001 |
