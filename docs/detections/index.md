@@ -108,8 +108,9 @@ controller, a loopback logon, a console logon and a failed logon must not.
     fills in on Windows events; `510122` (lockout) hung off the logon-*success* rule,
     which lockout events never reach; and `510132` ("successful login after brute
     force") never checked for a successful logon at all. All are fixed and
-    re-validated live (2026-10-12). `510133` ("lateral movement") is really a
-    three-failed-logons rule and is next. Each finding is written up with its
+    re-validated live (2026-10-12), as is `510133`, which was labelled "lateral
+    movement" but only counted three failed logons; it is now an honest
+    low-severity brute-force early warning. Each finding is written up with its
     fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).
 
 !!! note "Limits"

@@ -108,14 +108,19 @@
     </mitre>
   </rule>
 
-  <!-- Workstation-to-server auth failures: lateral movement indicator -->
-  <rule id="510133" level="12" frequency="3" timeframe="300">
+  <!-- Early warning: 3+ failed logons from one IP in 5 min (brute-force precursor).
+       2026-10-12: was "lateral movement" (T1021, L12) with nothing checking for lateral
+       movement; re-tagged as a low-severity precursor to 510130. same_srcip -> same_field
+       ipAddress (srcip is never set on eventchannel); ignore=300 so a burst alerts once.
+       Validated live on WIN11-OPS01: 2 failures -> nothing; 6 failures -> one 510133
+       on the 3rd, no repeat. -->
+  <rule id="510133" level="6" frequency="3" timeframe="300" ignore="300">
     <if_matched_sid>60122</if_matched_sid>
-    <same_srcip />
-    <description>Behavior: Repeated auth failures from workstation — lateral movement attempt</description>
-    <group>lateral_movement,behavior_based,</group>
+    <same_field>win.eventdata.ipAddress</same_field>
+    <description>Behavior: Repeated failed logons — $(win.eventdata.ipAddress) → 3+ failures in 5 min (possible brute-force precursor)</description>
+    <group>authentication_failures,brute_force,behavior_based,</group>
     <mitre>
-      <id>T1021</id>
+      <id>T1110</id>
     </mitre>
   </rule>
 
