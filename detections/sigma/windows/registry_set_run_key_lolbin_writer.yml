@@ -6,7 +6,10 @@ description: |
   living-off-the-land binary. The writer's image is kept in the output so the
   analyst sees what actually made the change. Sigma version of the lab Splunk
   search "SOC - Run/RunOnce Key Modified" (OP-004 D3), which replaced a search
-  whose title wrongly implied it only caught script hosts.
+  whose title wrongly implied it only caught script hosts. Compared with the
+  deployed SPL (detections/splunk), this version lists the Run-style keys
+  explicitly, so it also covers WOW6432Node and Policies\Explorer\Run without
+  matching look-alikes such as Explorer\RunMRU or Uninstall entries.
 author: dotslashtag
 date: 2026-10-08
 tags:
@@ -17,9 +20,15 @@ logsource:
   product: windows
 detection:
   selection_key:
+    # Ends in a backslash so look-alikes such as Explorer\RunMRU do not match;
+    # no Software\Microsoft prefix so the 32-bit WOW6432Node keys are covered too.
     TargetObject|contains:
-      - '\Software\Microsoft\Windows\CurrentVersion\Run\'
-      - '\Software\Microsoft\Windows\CurrentVersion\RunOnce\'
+      - '\CurrentVersion\Run\'
+      - '\CurrentVersion\RunOnce\'
+      - '\CurrentVersion\RunOnceEx\'
+      - '\CurrentVersion\RunServices\'
+      - '\CurrentVersion\RunServicesOnce\'
+      - '\CurrentVersion\Policies\Explorer\Run\'
   selection_writer:
     Image|endswith:
       - '\powershell.exe'
