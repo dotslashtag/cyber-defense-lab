@@ -97,8 +97,14 @@ index=wazuh_archives "EventChannel"
 | where match(srcip,"^10\.10\.2\.(4|9)$") AND srcip!=own_ip
 ```
 
-Run over the existing data, it returns exactly one row: this hop. Across 7 days,
-every other network logon was either to the domain controller or a loopback logon.
+Run over the existing data, it returns exactly one row: this hop. Across 7 days
+there were 8,864 network/RDP logons: 4,028 loopback and 4,835 to the domain
+controller, both excluded, and this one.
+
+<figure markdown>
+![D2 selectivity: 8,864 logons sorted into loopback, domain controller and one workstation hop](../assets/shots/op004-d2-selectivity.png)
+<figcaption>Every network logon in the 7 days, sorted: only the OP-003 hop is workstation → workstation.</figcaption>
+</figure>
 
 ## 7. Response
 
@@ -115,7 +121,7 @@ every other network logon was either to the domain controller or a loopback logo
 |---|---|---|
 | Lateral movement alert only watches the attacker network | **D2:** alert on any network or RDP logon between two workstations | ✅ OP-004, [Detections](../detections/index.md) |
 | No "first time this account logged on to this host" check | Baseline account-to-host pairs and alert on new ones | Backlog (D2 v2) |
-| Hard-coded workstation list in D2 | Replace with a maintained workstation lookup | Backlog |
+| Hard-coded workstation list in D2 (WIN11-PB026 is missing) | Replace with a maintained workstation lookup | Backlog |
 
 ## 9. Analyst notes
 
