@@ -126,11 +126,13 @@
     </mitre>
   </rule>
 
-  <!-- PB-009: Rundll32 launched from PowerShell -->
+  <!-- PB-009: Rundll32 launched from PowerShell.
+       2026-10-12: parent pattern widened to PowerShell 7 (pwsh.exe). Validated live on
+       WIN11-OPS01: powershell and pwsh parents alert; a cmd.exe parent stays at 92032. -->
   <rule id="510143" level="10">
     <if_sid>100100</if_sid>
     <field name="win.eventdata.image" type="pcre2">(?i)\\rundll32\.exe$</field>
-    <field name="win.eventdata.parentImage" type="pcre2">(?i)\\powershell\.exe$</field>
+    <field name="win.eventdata.parentImage" type="pcre2">(?i)\\(powershell|pwsh)\.exe$</field>
     <description>Suspicious Rundll32 process launched by PowerShell.</description>
     <group>rundll32,signed_binary_proxy_execution,powershell,windows,</group>
     <mitre>

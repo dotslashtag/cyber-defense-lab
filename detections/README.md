@@ -80,7 +80,7 @@ validating on the manager with `wazuh-logtest` first.
 | `510133` "Lateral movement attempt" (T1021) | Same trigger as `510130`/`510131` (failed logons from one IP) with a lower bar of 3 in 5 minutes; nothing checks workstation → server. It is a "3 failures" rule with a lateral-movement label, the same mislabel problem fixed in D3 | Rename and re-tag as low-severity brute-force precursor, or add a real workstation-source condition |
 | `510131` "Password spray" | Counts failures from one IP but does not require **different users** (unlike `510121`, which uses `different_user`); its group also includes `lateral_movement` | Add `<different_user />`; drop the `lateral_movement` group |
 | `510120`/`510123` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts | Check in the lab which fire together; keep one family or chain them |
-| `510143` | Parent must be `powershell.exe`; `pwsh.exe` (PowerShell 7) is missed | `(?i)\\(powershell\|pwsh)\.exe$` |
+| `510143` | ✅ **Fixed 2026-10-12.** Parent had to be `powershell.exe`, so `pwsh.exe` (PowerShell 7) was missed. Now `(?i)\\(powershell\|pwsh)\.exe$`; validated live (powershell and pwsh alert, cmd stays quiet) | Done |
 | `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 
 ## Tuning notes on the deployed D3 search
