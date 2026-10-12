@@ -40,9 +40,12 @@
     <mitre><id>T1110.001</id></mitre>
   </rule>
 
-  <!-- Account lockout — EID 4740 only, skip machine accounts ending in $ -->
+  <!-- Account lockout — EID 4740 only, skip machine accounts ending in $.
+       2026-10-12: parent 60106 -> 60115. 60106 only matches logon-success IDs
+       (4624 etc.), so 4740 never reached this rule; stock 60115 handles 4740.
+       Validated live on WIN11-OPS01: a local test account locked out -> 510122. -->
   <rule id="510122" level="12">
-    <if_sid>60106</if_sid>
+    <if_sid>60115</if_sid>
     <field name="win.system.eventID">^4740$</field>
     <field name="win.eventdata.targetUserName" negate="yes">\$$</field>
     <description>Active Directory account lockout: $(win.eventdata.targetUserName).</description>
@@ -84,11 +87,20 @@
     </mitre>
   </rule>
 
-  <!-- CRITICAL: Successful login AFTER brute force from same source -->
+  <!-- CRITICAL: successful network/RDP logon from an IP that just triggered 510130.
+       2026-10-12: now requires a real 4624 success (if_group authentication_success, so it
+       is reached via 60106 or its level-0 child 92651, which claims remote logons), logon
+       type 3/10, not a computer account; same_srcip -> same_field ipAddress (srcip is never
+       set on eventchannel). Validated live on WIN11-OPS01: 9 failures then a success from
+       the same IP -> 510130 then 510132; the same success 12 min later -> 60106 only. -->
   <rule id="510132" level="14" timeframe="600">
+    <if_group>authentication_success</if_group>
     <if_matched_sid>510130</if_matched_sid>
-    <same_srcip />
-    <description>CRITICAL: Successful login after brute force from $(srcip) — credential compromise</description>
+    <same_field>win.eventdata.ipAddress</same_field>
+    <field name="win.system.eventID">^4624$</field>
+    <field name="win.eventdata.logonType">^3$|^10$</field>
+    <field name="win.eventdata.targetUserName" negate="yes">\$$</field>
+    <description>CRITICAL: Successful logon by $(win.eventdata.targetUserName) after brute force from $(win.eventdata.ipAddress) — possible credential compromise</description>
     <group>brute_force,credential_access,behavior_based,</group>
     <mitre>
       <id>T1110.001</id>

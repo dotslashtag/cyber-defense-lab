@@ -6,6 +6,13 @@ positive:
           eventID: '4740'
         eventdata:
           targetUserName: 'labuser'
+  - description: Live 2026-10-12 - local test account locked out on WIN11-OPS01
+    event:
+      win:
+        system:
+          eventID: '4740'
+        eventdata:
+          targetUserName: 'fix4lock'
 negative:
   - description: Machine account lockout (name ends in $) is skipped
     event:
