@@ -73,7 +73,28 @@ the lab (tracked in the lab's owner checklist):
 3. **No host in the output.** Add the agent name so triage starts with *which machine*.
 
 The deployed search is published unchanged in `splunk/`; the Sigma rule already
-has the fixes and tests for 1.
+has the fixes and tests for 1. Proposed v2 for the lab (not yet deployed):
+
+```spl
+index=wazuh_archives sourcetype=wazuh_archives "EventChannel"
+| rex field=_raw "\((?<agent_name>[^)]+)\)\s+any->EventChannel"
+| rex field=_raw "(?<event_json>\{\"win\":.*)$"
+| spath input=event_json path=win.system.eventID output=event_id
+| spath input=event_json path=win.system.eventRecordID output=event_record_id
+| spath input=event_json path=win.eventdata.targetObject output=target_object
+| spath input=event_json path=win.eventdata.image output=source_image
+| spath input=event_json path=win.eventdata.details output=details
+| eval target_lower=lower(target_object), source_lower=lower(source_image)
+| where event_id="13"
+    AND match(target_lower, "\\\\currentversion\\\\(run|runonce|runonceex|runservices|runservicesonce|policies\\\\explorer\\\\run)\\\\")
+| where match(source_lower, "\\\\(powershell|pwsh|cmd|wscript|cscript|mshta|rundll32|reg)\.exe$")
+| dedup agent_name event_record_id
+| table _time agent_name source_image target_object details
+| sort 0 - _time
+```
+
+Validate it the same way as D1/D2 before switching: it must still fire on the
+OP-001/OP-002 Run-key writes, and return nothing over a normal week.
 
 ## Adding a detection
 
