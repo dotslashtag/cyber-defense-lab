@@ -29,7 +29,7 @@ OFFLINE_UNTESTABLE = {
     "510144": "matches against a Wazuh CDB list on the manager",
     "910001": "pipeline test marker",
     **{rid: _CORRELATION for rid in
-       ("510120", "510121", "510123", "510130", "510131", "510132", "510133")},
+       ("510120", "510121", "510130", "510131", "510132", "510133")},
 }
 
 # A Wazuh rules file may hold several top-level <group> elements, so wrap it

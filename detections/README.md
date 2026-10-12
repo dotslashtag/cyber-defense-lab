@@ -31,7 +31,7 @@ detections/
 | Clustered native discovery (**D1**) | T1033, T1082, T1016, T1057, T1087, T1018 | | ✅ | ✅ (correlation) | OP-002 → OP-004 |
 | Workstation-to-workstation logon (**D2**) | T1021.002, T1550.002, T1078 | | ✅ | ✅ | OP-003 → OP-004 |
 | Brute force / password spray from a known-bad IP (CDB-enriched) | T1110.001, T1110.003 | `510120`, `510121` | | | PB-001/002 |
-| Brute force, no IOC needed | T1110.001 | `510123`, `510130` | | | PB-001/002 |
+| Brute force, no IOC needed | T1110.001 | `510130` | | | PB-001/002 |
 | Password spray by volume | T1110.003 | `510131` | | | PB-002 |
 | Successful logon after brute force | T1110.001, T1078 | `510132` | | | PB-001 |
 | Repeated failed logons, early warning | T1110 | `510133` | | | PB-002 |
@@ -59,9 +59,9 @@ sigma convert -t splunk detections/sigma/windows/proc_creation_rundll32_spawned_
   sliding window.
 - **Wazuh:** rule IDs, structure and ATT&CK tags are checked, and each rule's own
   field patterns are run against sample alerts. The parent rule (`if_sid`) and the
-  decoder are not run here; that needs a Wazuh manager (`wazuh-logtest`). The
+  decoder are not run here; that needs a live test on a Wazuh manager. The
   IOC-list rule `510144` and the frequency/correlation rules (`510120`–`510121`,
-  `510123`, `510130`–`510133`) can only be tested on the manager. `910001` is an n8n
+  `510130`–`510133`) can only be tested on the manager. `910001` is an n8n
   pipeline test marker, not a detection.
 - **Splunk:** the `.spl` files are the searches deployed in the lab, validated
   there against live data (see OP-004). They are not executed in CI.
@@ -80,8 +80,9 @@ endpoint, then mirrored here; open rows are still waiting for that.
 | `510122` account lockout | ✅ **Fixed 2026-10-12.** Its parent `60106` only matches logon-success IDs (4624 etc.), so a 4740 lockout never reached it. Now `if_sid 60115` (stock lockout rule). Validated live: a local test account locked out on WIN11-OPS01 → `510122` | Done |
 | `510133` (was "Lateral movement attempt", T1021, L12) | ✅ **Fixed 2026-10-12.** It fired on 3 failed logons from one IP with nothing checking for lateral movement, and its `same_srcip` meant it could not fire at all. Re-tagged as a low-severity brute-force precursor (L6, T1110), `same_field win.eventdata.ipAddress`, `ignore="300"` so a burst alerts once. Validated live: 2 failures → nothing; 6 failures → one `510133` on the 3rd | Done |
 | `510130` / `510131` | ✅ **Fixed 2026-10-12.** Both compared the source IP with `same_srcip`, but Wazuh never sets `srcip` on Windows eventchannel events (the IP is in `win.eventdata.ipAddress`), so **neither could fire**: a live burst of 12 failed logons from one IP raised nothing. `510131` also didn't require different users and carried a `lateral_movement` tag. Now `same_field win.eventdata.ipAddress`, plus `different_field win.eventdata.targetUserName` on `510131`. Validated live: 12 users from one IP → `510130` then `510131`; 12 failures for one user → `510130` only | Done |
-| `510120`, `510123` | Same IP comparison (`same_source_ip` / `same_srcip`) as the old `510130`/`510131`, so most likely also unable to fire on Windows events | Switch to `same_field win.eventdata.ipAddress` as each rule is fixed, and re-test live |
-| `510120`/`510123` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts. Checked live 2026-10-12: a spray raises `510130` (8th failure) and then `510131` (11th), which is an intended escalation, not a duplicate. `510123` did not fire, consistent with the IP-field issue above | Revisit once `510120`/`510123` can fire |
+| `510123` brute-force fallback | 🗑️ **Retired 2026-10-12.** 0 hits in 90 days: it counted events ending at the generic audit-failure rule `60105`, but logon failures end at `60122`; its `same_source_ip` could not match on Windows events; and `510130` now covers the same burst. Removed from the rules file and the n8n integration list; live check after removal: 3 failures → `510133`, no `510123` | Done |
+| `510120` brute force from malicious IP | Same `same_source_ip` problem as the old `510130`/`510131`, so most likely unable to fire on Windows events | Switch to `same_field win.eventdata.ipAddress`; needs a live test from an IP on the malicious-IP list (Kali), planned for the next Kali session |
+| `510120` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts. Checked live 2026-10-12: a spray raises `510130` (8th failure) and then `510131` (11th), which is an intended escalation, not a duplicate. `510123` never fired and was retired | Revisit once `510120` can fire |
 | `510143` | ✅ **Fixed 2026-10-12.** Parent had to be `powershell.exe`, so `pwsh.exe` (PowerShell 7) was missed. Now `(?i)\\(powershell\|pwsh)\.exe$`; validated live (powershell and pwsh alert, cmd stays quiet) | Done |
 | `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 

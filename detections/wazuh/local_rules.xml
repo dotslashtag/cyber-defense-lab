@@ -31,14 +31,10 @@
     <mitre><id>T1110.003</id></mitre>
   </rule>
 
-  <!-- Brute force fallback (no CDB requirement) -->
-  <rule id="510123" level="12" frequency="5" timeframe="60">
-    <if_matched_sid>60105</if_matched_sid>
-    <same_source_ip />
-    <description>Brute force attack - $(frequency) failed logons from same IP.</description>
-    <group>brute_force,authentication_failed,windows,</group>
-    <mitre><id>T1110.001</id></mitre>
-  </rule>
+  <!-- 510123 ("brute force fallback", 5 x 60105 from same IP in 60s) retired 2026-10-12:
+       0 hits in 90 days. Logon failures end at 60122, not 60105, so it almost never
+       counted them, its same_source_ip could not match on eventchannel, and 510130
+       now covers the same burst. Also removed from the n8n integration rule_id list. -->
 
   <!-- Account lockout — EID 4740 only, skip machine accounts ending in $.
        2026-10-12: parent 60106 -> 60115. 60106 only matches logon-success IDs
