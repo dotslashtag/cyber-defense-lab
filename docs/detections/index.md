@@ -103,10 +103,13 @@ controller, a loopback logon, a console logon and a failed logon must not.
     Publishing the live Wazuh file meant reading it line by line, then testing each
     rule live. `510140` (ExecutionPolicy Bypass) turned out to be **silently dead** on
     the newest endpoint: another rule pack had taken over its parent event, so it was
-    never evaluated. Fixed and re-validated on 2026-10-12. Two rules also don't do
+    never evaluated. The brute-force and password-spray rules `510130`/`510131` had
+    the same outcome for a different reason: they compared a source-IP field that
+    Wazuh never fills in on Windows events, so a live burst of 12 failed logons
+    raised nothing. All three are fixed and re-validated live (2026-10-12). Two rules also don't do
     what their names say: `510132` ("successful login after brute force") never
     checks for a successful logon, and `510133` ("lateral movement") is really a
-    three-failed-logons rule. Both, and four smaller issues, are written up with
+    three-failed-logons rule. Both, and the remaining smaller issues, are written up with
     fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).
 
 !!! note "Limits"

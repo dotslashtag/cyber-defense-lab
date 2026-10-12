@@ -54,23 +54,31 @@
 
   <!-- ═══ BEHAVIOR-BASED BRUTE FORCE (NO CDB DEPENDENCY) ═══ -->
 
-  <!-- Internal brute force: 8+ failed logons from same IP in 120s -->
+  <!-- Internal brute force: 8+ failed logons from same IP in 120s.
+       2026-10-12: same_srcip -> same_field ipAddress. srcip is never set on Windows
+       eventchannel events, so the rule could not fire. Validated live on WIN11-OPS01:
+       fires on the 8th failure, for one user (brute force) and many (spray). -->
   <rule id="510130" level="12" frequency="8" timeframe="120">
     <if_matched_sid>60122</if_matched_sid>
-    <same_srcip />
-    <description>Behavior: Brute force detected — $(srcip) → 8+ failures in 2 min</description>
+    <same_field>win.eventdata.ipAddress</same_field>
+    <description>Behavior: Brute force detected — $(win.eventdata.ipAddress) → 8+ failures in 2 min</description>
     <group>brute_force,behavior_based,</group>
     <mitre>
       <id>T1110.001</id>
     </mitre>
   </rule>
 
-  <!-- Password spray: 10+ failures from same IP in 300s (high volume = likely multiple users) -->
+  <!-- Password spray: 10+ failures from same IP in 300s, each for a different user.
+       2026-10-12: same_srcip -> same_field ipAddress (srcip never set on eventchannel),
+       different_field on the user added (it counted single-user brute force as a
+       spray), lateral_movement group dropped. Validated live on WIN11-OPS01: 12 users
+       from one IP -> 510131; 12 failures for one user -> 510130 only. -->
   <rule id="510131" level="13" frequency="10" timeframe="300">
     <if_matched_sid>60122</if_matched_sid>
-    <same_srcip />
-    <description>Behavior: Likely password spray — $(srcip) → 10+ failures in 5 min (possible multi-user targeting)</description>
-    <group>password_spray,behavior_based,lateral_movement,</group>
+    <same_field>win.eventdata.ipAddress</same_field>
+    <different_field>win.eventdata.targetUserName</different_field>
+    <description>Behavior: Password spray — $(win.eventdata.ipAddress) → 10+ failures across different users in 5 min</description>
+    <group>password_spray,behavior_based,</group>
     <mitre>
       <id>T1110.003</id>
     </mitre>
