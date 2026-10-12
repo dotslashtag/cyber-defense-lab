@@ -21,7 +21,8 @@ Each was validated **both ways** in the lab before being enabled:
 
 - **D1** fired at 8 distinct tools on a replayed discovery burst; the busiest normal
   10-minute window on any host had 1.
-- **D2** caught the OP-003 hop; across 7 days of normal logons it matched nothing else.
+- **D2** caught the OP-003 hop, and only that: of 8,864 network/RDP logons over 7 days,
+  4,028 were loopback and 4,835 went to the domain controller, leaving exactly 1.
 
 <div class="grid" markdown>
 
@@ -33,6 +34,20 @@ Each was validated **both ways** in the lab before being enabled:
 <figure markdown>
 ![D1 over a normal window: no results](../assets/shots/op004-d1-baseline-quiet.png)
 <figcaption>The same search over a normal window: no results.</figcaption>
+</figure>
+
+</div>
+
+<div class="grid" markdown>
+
+<figure markdown>
+![D2 firing on the OP-003 hop](../assets/shots/op004-d2-fires.png)
+<figcaption>D2 fires on the OP-003 hop: Windows10 ← 10.10.2.9 as <code>labuser</code>, type 3.</figcaption>
+</figure>
+
+<figure markdown>
+![D2 selectivity: 8,864 logons sorted into loopback, domain controller and one workstation hop](../assets/shots/op004-d2-selectivity.png)
+<figcaption>Selectivity over 7 days: 8,864 logons, of which only 1 is workstation → workstation.</figcaption>
 </figure>
 
 </div>
@@ -84,6 +99,9 @@ controller, a loopback logon, a console logon and a failed logon must not.
   exclusion, raised a threshold, changed a process name). Each change made a test fail.
 
 !!! note "Limits"
+    D2's workstation list is hard-coded to the two hosts used in OP-003; the lab's
+    third workstation (WIN11-PB026) is not in it yet. Replacing the list with a
+    maintained lookup is on the backlog.
     The Wazuh parent rule and decoder only run on a real Wazuh manager, and the
     Splunk searches were validated against live lab data rather than in CI. Sample
     events are representative events based on lab validation runs, not raw log exports.

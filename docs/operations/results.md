@@ -24,7 +24,7 @@ for a quiet one. Detection turned out to depend on known tools and IOCs, not on 
 | Gap | Detection built | Validated before enabling |
 |---|---|---|
 | Native discovery invisible (OP-002) | **D1** · 4+ discovery tools on one host in 10 min | Fired at 8 tools on a replayed burst; busiest normal window on any host = 1 |
-| Workstation → workstation hop invisible (OP-003) | **D2** · network/RDP logon between peer workstations | Caught the OP-003 hop; 0 other matches across 7 days of logons |
+| Workstation → workstation hop invisible (OP-003) | **D2** · network/RDP logon between peer workstations | Caught the OP-003 hop; of 8,864 logons in 7 days, the only match |
 | Run-key alert misnamed "script host" (OP-002) | **D3** · renamed "Run/RunOnce Key Modified", shows the real writer | Logic unchanged; original kept disabled for rollback |
 
 <div class="grid" markdown>
@@ -37,6 +37,20 @@ for a quiet one. Detection turned out to depend on known tools and IOCs, not on 
 <figure markdown>
 ![D1 over a normal window returns no results](../assets/shots/op004-d1-baseline-quiet.png)
 <figcaption>Same search over normal activity: no results.</figcaption>
+</figure>
+
+</div>
+
+<div class="grid" markdown>
+
+<figure markdown>
+![D2 firing on the OP-003 hop](../assets/shots/op004-d2-fires.png)
+<figcaption>D2 fires on the workstation-to-workstation hop.</figcaption>
+</figure>
+
+<figure markdown>
+![D2 selectivity over 7 days](../assets/shots/op004-d2-selectivity.png)
+<figcaption>8,864 logons in 7 days: 4,028 loopback, 4,835 to the DC, 1 lateral hop.</figcaption>
 </figure>
 
 </div>
