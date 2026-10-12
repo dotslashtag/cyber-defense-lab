@@ -1,14 +1,28 @@
 positive:
-  - description: PB-003 controlled run
+  - description: PB-003 controlled run, full flag
     event:
       win:
         eventdata:
-          image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
-          commandLine: 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\Temp\pb003.ps1'
+          image: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+          commandLine: 'powershell.exe -NoProfile -ExecutionPolicy Bypass -File C:\\Temp\\pb003.ps1'
+  - description: Live 2026-10-12 validation, abbreviated -ep (WIN11-OPS01)
+    event:
+      win:
+        eventdata:
+          commandLine: 'powershell  -ep bypass -c "Write-Output pb003-fix1b-ep"'
+  - description: Live 2026-10-12 validation, abbreviated -exec (WIN11-OPS01)
+    event:
+      win:
+        eventdata:
+          commandLine: 'powershell  -exec Bypass -c "Write-Output pb003-fix1b-exec"'
 negative:
-  - description: Normal execution policy
+  - description: Live 2026-10-12 validation, normal execution policy stays quiet
     event:
       win:
         eventdata:
-          image: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
-          commandLine: 'powershell.exe -ExecutionPolicy RemoteSigned -File C:\Scripts\backup.ps1'
+          commandLine: 'powershell  -ExecutionPolicy RemoteSigned -c "Write-Output pb003-fix1b-negative"'
+  - description: The word "bypass" in a script name is not the flag
+    event:
+      win:
+        eventdata:
+          commandLine: 'powershell.exe -File C:\\Scripts\\check-proxy-bypass.ps1'
