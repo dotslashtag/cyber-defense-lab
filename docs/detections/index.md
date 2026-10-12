@@ -67,7 +67,7 @@ minutes. See [Results](../operations/results.md).
 | Defender Tamper Protection blocked a change | T1562.001 | Wazuh `510142` · Sigma | PB-005 · OP-001 |
 | Rundll32 spawned by PowerShell | T1218.011 | Wazuh `510143` · Sigma | PB-009 |
 | Connection to a controlled IOC IP | (none on purpose) | Wazuh `510144` | PB-010 · PB-017 · PB-019 |
-| Brute force, password spray, lockout, success-after-brute-force | T1110.001 · T1110.003 · T1078 | Wazuh `510120`–`510123`, `510130`–`510133` | PB-001 · PB-002 |
+| Brute force, password spray, lockout, success-after-brute-force | T1110.001 · T1110.003 · T1078 | Wazuh `510120`–`510122`, `510130`–`510133` | PB-001 · PB-002 |
 
 ## Example: D2 in Sigma
 
