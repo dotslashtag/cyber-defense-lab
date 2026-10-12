@@ -1,14 +1,26 @@
 positive:
-  - description: PB-009 controlled run
+  - description: PB-009 controlled run, Windows PowerShell 5.1 parent
     event:
       win:
         eventdata:
-          image: 'C:\Windows\System32\rundll32.exe'
-          parentImage: 'C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe'
+          image: 'C:\\Windows\\System32\\rundll32.exe'
+          parentImage: 'C:\\Windows\\System32\\WindowsPowerShell\\v1.0\\powershell.exe'
+  - description: Live 2026-10-12 validation, PowerShell 7 parent (pb009-fix2c-pwsh)
+    event:
+      win:
+        eventdata:
+          image: 'C:\\Windows\\System32\\rundll32.exe'
+          parentImage: 'C:\\Program Files\\PowerShell\\7\\pwsh.exe'
 negative:
   - description: rundll32 launched by Explorer
     event:
       win:
         eventdata:
-          image: 'C:\Windows\System32\rundll32.exe'
-          parentImage: 'C:\Windows\explorer.exe'
+          image: 'C:\\Windows\\System32\\rundll32.exe'
+          parentImage: 'C:\\Windows\\explorer.exe'
+  - description: Live 2026-10-12 validation, cmd.exe parent stays quiet (pb009-fix2b-negative)
+    event:
+      win:
+        eventdata:
+          image: 'C:\\Windows\\System32\\rundll32.exe'
+          parentImage: 'C:\\Windows\\System32\\cmd.exe'
