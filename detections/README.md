@@ -81,7 +81,7 @@ validating on the manager with `wazuh-logtest` first.
 | `510131` "Password spray" | Counts failures from one IP but does not require **different users** (unlike `510121`, which uses `different_user`); its group also includes `lateral_movement` | Add `<different_user />`; drop the `lateral_movement` group |
 | `510120`/`510123` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts | Check in the lab which fire together; keep one family or chain them |
 | `510143` | Parent must be `powershell.exe`; `pwsh.exe` (PowerShell 7) is missed | `(?i)\\(powershell\|pwsh)\.exe$` |
-| `510140` | Only matches the full `-ExecutionPolicy`; `-ep bypass` / `-exec bypass` slip past | Use the Sigma version's pattern `(?i)\s[-/](ep\|ex[a-z]*)\s+bypass` |
+| `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 
 ## Tuning notes on the deployed D3 search
 

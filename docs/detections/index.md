@@ -100,7 +100,10 @@ controller, a loopback logon, a console logon and a failed logon must not.
   exclusion, raised a threshold, changed a process name). Each change made a test fail.
 
 !!! warning "Known issues I found in my own rules"
-    Publishing the live Wazuh file meant reading it line by line. Two rules don't do
+    Publishing the live Wazuh file meant reading it line by line, then testing each
+    rule live. `510140` (ExecutionPolicy Bypass) turned out to be **silently dead** on
+    the newest endpoint: another rule pack had taken over its parent event, so it was
+    never evaluated. Fixed and re-validated on 2026-10-12. Two rules also don't do
     what their names say: `510132` ("successful login after brute force") never
     checks for a successful logon, and `510133` ("lateral movement") is really a
     three-failed-logons rule. Both, and four smaller issues, are written up with

@@ -1,7 +1,8 @@
 <!--
   Cyber Defense Lab - Wazuh custom rules.
-  Exported from the lab manager's /var/ossec/etc/rules/local_rules.xml on 2026-10-12
-  and published unchanged apart from this header. Review notes and known issues:
+  Exported from the lab manager's /var/ossec/etc/rules/local_rules.xml on 2026-10-12.
+  Later fixes are applied on the manager first, validated live, then mirrored here
+  (each one is marked with a dated comment on the rule). Review notes and known issues:
   detections/README.md ("Wazuh rule review").
 -->
 <group name="local,">
@@ -98,10 +99,14 @@
     </mitre>
   </rule>
 
-  <!-- PB-003: PowerShell launched with ExecutionPolicy Bypass -->
+  <!-- PB-003: PowerShell launched with ExecutionPolicy Bypass.
+       2026-10-12: parent 100162 added (the SOCFortress Sysmon EID 1 PowerShell rule
+       now classifies these events, so a 92027-only child was never reached), and the
+       pattern widened to the -ep / -ex / -exec abbreviations. Validated live on
+       WIN11-OPS01: 3/3 bypass forms alert, -ExecutionPolicy RemoteSigned stays at 100162. -->
   <rule id="510140" level="10">
-    <if_sid>92027</if_sid>
-    <field name="win.eventdata.commandLine" type="pcre2">(?i)-executionpolicy\s+bypass</field>
+    <if_sid>92027, 100162</if_sid>
+    <field name="win.eventdata.commandLine" type="pcre2">(?i)\s[-/](ep|ex[a-z]*)\s+bypass</field>
     <description>Suspicious PowerShell launched with ExecutionPolicy Bypass.</description>
     <group>powershell,execution_policy_bypass,windows,</group>
     <mitre>
