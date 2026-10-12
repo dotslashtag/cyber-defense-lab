@@ -71,15 +71,16 @@ sigma convert -t splunk detections/sigma/windows/proc_creation_rundll32_spawned_
 ## Wazuh rule review
 
 `wazuh/local_rules.xml` is the lab's live file. Reading it closely found these
-issues; they are documented here rather than changed, because each fix needs
-validating on the manager with `wazuh-logtest` first.
+issues. Each fix is made on the manager first, validated with a live test on an
+endpoint, then mirrored here; open rows are still waiting for that.
 
 | Rule | Issue | Suggested fix |
 |---|---|---|
-| `510132` "Successful login after brute force" (L14) | Nothing in the rule checks that the current event **is a successful logon**. It only requires a prior `510130` and the same source IP within 10 minutes, so further failures from that IP could raise a "credential compromise" alert | Make it a child of the successful-logon (4624) rule with `if_sid`, keep `if_matched_sid 510130` + `same_srcip` |
+| `510132` "Successful login after brute force" (L14) | Nothing in the rule checks that the current event **is a successful logon**. It only requires a prior `510130` and the same source IP within 10 minutes, so further failures from that IP could raise a "credential compromise" alert | Make it a child of the successful-logon (4624) rule with `if_sid`, keep `if_matched_sid 510130`, and compare the IP with `same_field win.eventdata.ipAddress` (see the `510130`/`510131` fix) |
 | `510133` "Lateral movement attempt" (T1021) | Same trigger as `510130`/`510131` (failed logons from one IP) with a lower bar of 3 in 5 minutes; nothing checks workstation → server. It is a "3 failures" rule with a lateral-movement label, the same mislabel problem fixed in D3 | Rename and re-tag as low-severity brute-force precursor, or add a real workstation-source condition |
-| `510131` "Password spray" | Counts failures from one IP but does not require **different users** (unlike `510121`, which uses `different_user`); its group also includes `lateral_movement` | Add `<different_user />`; drop the `lateral_movement` group |
-| `510120`/`510123` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts | Check in the lab which fire together; keep one family or chain them |
+| `510130` / `510131` | ✅ **Fixed 2026-10-12.** Both compared the source IP with `same_srcip`, but Wazuh never sets `srcip` on Windows eventchannel events (the IP is in `win.eventdata.ipAddress`), so **neither could fire**: a live burst of 12 failed logons from one IP raised nothing. `510131` also didn't require different users and carried a `lateral_movement` tag. Now `same_field win.eventdata.ipAddress`, plus `different_field win.eventdata.targetUserName` on `510131`. Validated live: 12 users from one IP → `510130` then `510131`; 12 failures for one user → `510130` only | Done |
+| `510120`, `510123`, `510132`, `510133` | Same IP comparison (`same_source_ip` / `same_srcip`) as the old `510130`/`510131`, so most likely also unable to fire on Windows events | Switch to `same_field win.eventdata.ipAddress` as each rule is fixed, and re-test live |
+| `510120`/`510123` vs `510130`/`510131` | Two families detect the same burst from different parents, so one attack may raise several alerts. Checked live 2026-10-12: a spray raises `510130` (8th failure) and then `510131` (11th), which is an intended escalation, not a duplicate. `510123` did not fire, consistent with the IP-field issue above | Revisit once `510120`/`510123` can fire |
 | `510143` | ✅ **Fixed 2026-10-12.** Parent had to be `powershell.exe`, so `pwsh.exe` (PowerShell 7) was missed. Now `(?i)\\(powershell\|pwsh)\.exe$`; validated live (powershell and pwsh alert, cmd stays quiet) | Done |
 | `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 
