@@ -92,8 +92,9 @@ flowchart LR
 The tool posts a JSON summary; n8n turns it into a TheHive alert. Setup in n8n
 (no code):
 
-1. **Webhook** node: method `POST`, path `evtx-hunter`. Turn on header auth if
-   n8n is reachable from outside the lab.
+1. **Webhook** node: method `POST`, path `evtx-hunter`, **Header Auth** with header
+   `X-Webhook-Token`. The tool sends that header when the `EVTX_HUNTER_WEBHOOK_TOKEN`
+   environment variable is set, so the token never appears on the command line.
 2. **IF** node: `{{ $json.body.summary.findings }}` is greater than `0`.
 3. **TheHive** node (*Alert → Create*):
     - Title: `EVTX Hunter: {{ $json.body.summary.findings }} findings on {{ $json.body.summary.hosts.join(", ") }}`
@@ -102,9 +103,12 @@ The tool posts a JSON summary; n8n turns it into a TheHive alert. Setup in n8n
     - Description: the finding titles, e.g. `{{ $json.body.findings.map(f => "- " + f.title + " (" + f.host + ")").join("\n") }}`
 4. Run it:
 
-    ```bash
-    evtx-hunter hunt Sysmon.evtx Security.evtx --webhook http://<n8n-host>:5678/webhook/evtx-hunter
+    ```powershell
+    $env:EVTX_HUNTER_WEBHOOK_TOKEN = Read-Host -AsSecureString | ConvertFrom-SecureString -AsPlainText
+    evtx-hunter hunt Sysmon.evtx Security.evtx --webhook https://<n8n-host>/webhook/evtx-hunter --ca-file lab-ca.pem
     ```
+
+    Over plain `http://` the tool still works but warns that the token travels unencrypted.
 
 !!! tip "Keep the human in the loop"
     This creates an **alert**, not a response. Containment still goes through the
