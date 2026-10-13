@@ -14,7 +14,28 @@ positive:
       Computer: 'WIN11-OPS01.soc.lab'
       IpAddress: '10.10.2.4'
       TargetUserName: 'labuser'
+  - description: Blind re-run hop - WIN11-OPS01 to Win10 as ops01 (2026-09-30 08:14:25)
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'Win10.soc.lab'
+      IpAddress: '10.10.2.9'
+      TargetUserName: 'ops01'
+  - description: Third workstation WIN11-PB026 as the source (added 2026-10-13)
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'WIN11-OPS01.soc.lab'
+      IpAddress: '10.10.2.8'
+      TargetUserName: 'pb026_user'
 negative:
+  - description: Live 2026-10-13 - WIN11-PB026 user logging on to the domain controller
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'DC01.soc.lab'
+      IpAddress: '10.10.2.8'
+      TargetUserName: 'pb026_user'
   - description: Workstation authenticating to the domain controller (normal)
     event:
       EventID: 4624

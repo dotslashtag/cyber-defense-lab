@@ -14,6 +14,7 @@ description: |
   filtered here instead.
 author: dotslashtag
 date: 2026-10-08
+modified: 2026-10-13
 tags:
   - attack.lateral-movement
   - attack.t1021.002
@@ -33,10 +34,12 @@ detection:
     Computer:
       - 'Win10.soc.lab'
       - 'WIN11-OPS01.soc.lab'
+      - 'WIN11-PB026.soc.lab'
   selection_source_workstation:
     IpAddress:
       - '10.10.2.4'
       - '10.10.2.9'
+      - '10.10.2.8'
   filter_loopback:
     IpAddress:
       - '127.0.0.1'
