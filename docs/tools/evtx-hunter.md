@@ -104,7 +104,9 @@ The tool posts a JSON summary; n8n turns it into a TheHive alert. Setup in n8n
 4. Run it:
 
     ```powershell
-    $env:EVTX_HUNTER_WEBHOOK_TOKEN = Read-Host -AsSecureString | ConvertFrom-SecureString -AsPlainText
+    # prompts without echoing the token; works in Windows PowerShell 5.1 and 7
+    $s = Read-Host "Webhook token" -AsSecureString
+    $env:EVTX_HUNTER_WEBHOOK_TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
     evtx-hunter hunt Sysmon.evtx Security.evtx --webhook https://<n8n-host>/webhook/evtx-hunter --ca-file lab-ca.pem
     ```
 
