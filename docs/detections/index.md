@@ -77,9 +77,9 @@ detection:
     EventID: 4624
     LogonType: [3, 10]
   selection_target_workstation:
-    Computer: ['Win10.soc.lab', 'WIN11-OPS01.soc.lab']
+    Computer: ['Win10.soc.lab', 'WIN11-OPS01.soc.lab', 'WIN11-PB026.soc.lab']
   selection_source_workstation:
-    IpAddress: ['10.10.2.4', '10.10.2.9']
+    IpAddress: ['10.10.2.4', '10.10.2.9', '10.10.2.8']
   filter_loopback:
     IpAddress: ['127.0.0.1', '::1', '-']
   condition: all of selection_* and not filter_loopback
@@ -114,9 +114,10 @@ controller, a loopback logon, a console logon and a failed logon must not.
     fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).
 
 !!! note "Limits"
-    D2's workstation list is hard-coded to the two hosts used in OP-003; the lab's
-    third workstation (WIN11-PB026) is not in it yet. Replacing the list with a
-    maintained lookup is on the backlog.
+    D2 v2 (2026-10-13) reads its workstations from a lookup and now includes
+    WIN11-PB026, but a live PB026 hop is not proven yet: testing it found that
+    PB026 and WIN11-OPS01 are cloned VMs with the same machine SID, so Windows
+    refuses logons between them. Sysprep of PB026 is on the backlog.
     The Wazuh parent rule and decoder only run on a real Wazuh manager, and the
     Splunk searches were validated against live lab data rather than in CI. Sample
     events are representative events based on lab validation runs, not raw log exports.

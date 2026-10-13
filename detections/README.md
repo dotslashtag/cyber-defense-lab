@@ -86,6 +86,31 @@ endpoint, then mirrored here; open rows are still waiting for that.
 | `510143` | ✅ **Fixed 2026-10-12.** Parent had to be `powershell.exe`, so `pwsh.exe` (PowerShell 7) was missed. Now `(?i)\\(powershell\|pwsh)\.exe$`; validated live (powershell and pwsh alert, cmd stays quiet) | Done |
 | `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 
+## D2 v2: workstation lookup (2026-10-13)
+
+D2 v1 named its workstations inside the search: two Wazuh agent names and an IP
+regex. That missed the third workstation (WIN11-PB026), and it broke silently when an
+agent was re-added under a new name (`Win10` became `Windows10` on 2026-09-09). v2 reads
+the workstation set from `splunk/lookups/soc_workstations.csv` (Windows hostname → IP)
+and identifies the receiving host by the **Windows computer name in the event**, which
+does not change when the agent is re-registered. Adding a workstation is one CSV row.
+
+| Check | v1 | v2 |
+|---|---|---|
+| 60 days of 4624 type 3/10: OP-003 hop (09-28) and blind re-run hop (09-30) | 2 / 2 | 2 / 2 |
+| Rows only one version returns | none | none |
+| Self-logon on WIN11-OPS01 (source = destination), live | quiet | quiet |
+| WIN11-PB026 user logging on to the DC (thousands of DC logons), live | quiet | quiet |
+| Live hop involving WIN11-PB026 | n/a | **not yet proven**, see below |
+
+**Why the PB026 hop is not proven live yet.** Every logon between WIN11-OPS01 and
+WIN11-PB026 failed in both directions (`0xc000006d` / `0x0`, NTLM and Kerberos, any
+account, no password involved), while OPS01 → Win10 works. Typing, NTLM settings,
+clock skew and the domain trust were each ruled out. The cause: both VMs share the same
+machine SID (`S-1-5-21-356425069-…`), so they were cloned without Sysprep, and current
+Windows refuses network logons between machines with duplicate SIDs. The fix (Sysprep
+PB026) is on the lab backlog; the PB026 hop will be re-tested afterwards.
+
 ## D3 v2: tightened and redeployed (2026-10-13)
 
 Publishing D3 found three problems, now fixed in the lab and in
