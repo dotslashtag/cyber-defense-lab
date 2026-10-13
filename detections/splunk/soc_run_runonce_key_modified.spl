@@ -1,22 +1,16 @@
-```SOC - Run/RunOnce Key Modified (OP-004 D3). Sysmon Event 13 writing a CurrentVersion Run-style key, by a shell, script host or LOLBin; the writer is shown as source_image so triage is not misled. Exported from the lab as deployed (2026-10-12).```
-index=wazuh_archives
+```SOC - Run/RunOnce Key Modified (OP-004 D3), v2 deployed 2026-10-13. Sysmon Event 13 writing a Run-style autostart key (Run, RunOnce, RunOnceEx, RunServices, RunServicesOnce, Policies\Explorer\Run) by a shell, script host or LOLBin; the writer is shown as source_image and the host as agent_name. Backslash runs are folded to "/" first because Wazuh double-escapes eventchannel strings, so the archive values carry "\\" between path parts. v1 matched %currentversion%run% (also Explorer\RunMRU) and deduped on record ID alone.```
+index=wazuh_archives "EventChannel"
+| rex field=_raw "\((?<agent_name>[^)]+)\)\s+any->EventChannel"
 | rex field=_raw "(?<event_json>\{\"win\":.*)$"
 | spath input=event_json path=win.system.eventID output=event_id
 | spath input=event_json path=win.system.eventRecordID output=event_record_id
 | spath input=event_json path=win.eventdata.targetObject output=target_object
 | spath input=event_json path=win.eventdata.image output=source_image
 | spath input=event_json path=win.eventdata.details output=details
-| eval target_lower=lower(target_object)
-| eval source_lower=lower(source_image)
-| where event_id="13" AND like(target_lower, "%currentversion%run%")
-| where like(source_lower, "%powershell.exe")
-    OR like(source_lower, "%pwsh.exe")
-    OR like(source_lower, "%cmd.exe")
-    OR like(source_lower, "%wscript.exe")
-    OR like(source_lower, "%cscript.exe")
-    OR like(source_lower, "%mshta.exe")
-    OR like(source_lower, "%rundll32.exe")
-    OR like(source_lower, "%reg.exe")
-| dedup event_record_id
-| table _time event_record_id source_image target_object details
+| where event_id="13"
+| eval t=replace(lower(target_object), "\\\\+", "/"), s=replace(lower(source_image), "\\\\+", "/")
+| where match(t, "/currentversion/(run|runonce|runonceex|runservices|runservicesonce|policies/explorer/run)/")
+| where match(s, "/(powershell|pwsh|cmd|wscript|cscript|mshta|rundll32|reg)\.exe$")
+| dedup agent_name event_record_id
+| table _time agent_name source_image target_object details
 | sort 0 - _time

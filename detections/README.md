@@ -86,41 +86,31 @@ endpoint, then mirrored here; open rows are still waiting for that.
 | `510143` | ✅ **Fixed 2026-10-12.** Parent had to be `powershell.exe`, so `pwsh.exe` (PowerShell 7) was missed. Now `(?i)\\(powershell\|pwsh)\.exe$`; validated live (powershell and pwsh alert, cmd stays quiet) | Done |
 | `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 
-## Tuning notes on the deployed D3 search
+## D3 v2: tightened and redeployed (2026-10-13)
 
-Comparing the exported D3 SPL with its Sigma version found three things to fix in
-the lab (tracked in the lab's owner checklist):
+Publishing D3 found three problems, now fixed in the lab and in
+`splunk/soc_run_runonce_key_modified.spl`:
 
-1. **Key match is too loose.** `like(target, "%currentversion%run%")` also matches
-   `Explorer\RunMRU` (Win+R history) and `Uninstall` entries with "Run" in the name.
-   The Sigma version lists the Run-style keys explicitly, ending in a backslash.
-2. **`dedup event_record_id` can drop real events.** Record IDs are only unique per
-   host and channel, so two hosts can share one. Dedup on host plus record ID.
-3. **No host in the output.** Add the agent name so triage starts with *which machine*.
+1. **Key match was too loose.** `like(target, "%currentversion%run%")` also matched
+   `Explorer\RunMRU` (Win+R history). v2 lists the Run-style keys explicitly.
+2. **`dedup event_record_id` could drop real events.** Record IDs are only unique per
+   host and channel. v2 dedups on host plus record ID.
+3. **No host in the output.** v2 adds `agent_name`.
 
-The deployed search is published unchanged in `splunk/`; the Sigma rule already
-has the fixes and tests for 1. Proposed v2 for the lab (not yet deployed):
+**Validation, before switching:**
 
-```spl
-index=wazuh_archives sourcetype=wazuh_archives "EventChannel"
-| rex field=_raw "\((?<agent_name>[^)]+)\)\s+any->EventChannel"
-| rex field=_raw "(?<event_json>\{\"win\":.*)$"
-| spath input=event_json path=win.system.eventID output=event_id
-| spath input=event_json path=win.system.eventRecordID output=event_record_id
-| spath input=event_json path=win.eventdata.targetObject output=target_object
-| spath input=event_json path=win.eventdata.image output=source_image
-| spath input=event_json path=win.eventdata.details output=details
-| eval target_lower=lower(target_object), source_lower=lower(source_image)
-| where event_id="13"
-    AND match(target_lower, "\\\\currentversion\\\\(run|runonce|runonceex|runservices|runservicesonce|policies\\\\explorer\\\\run)\\\\")
-| where match(source_lower, "\\\\(powershell|pwsh|cmd|wscript|cscript|mshta|rundll32|reg)\.exe$")
-| dedup agent_name event_record_id
-| table _time agent_name source_image target_object details
-| sort 0 - _time
-```
+| Check | v1 (old) | v2 |
+|---|---|---|
+| 60 days of real Run-key writes (OP-001, OP-002, PB-012, blind re-run; 12 key/host/writer combinations on 4 hosts) | 12 / 12 | 12 / 12 |
+| Live `reg add ...\Run\D3v2Test` on WIN11-OPS01 | alert | alert |
+| Live `reg add ...\Explorer\RunMRU\z` on WIN11-OPS01 | **false positive** | quiet |
 
-Validate it the same way as D1/D2 before switching: it must still fire on the
-OP-001/OP-002 Run-key writes, and return nothing over a normal week.
+**Lesson: test against real data, not just samples.** The first v2 draft matched
+`\currentversion\run\` with single backslashes and passed every Sigma test, but on the
+archive data it missed **all 12** real events: Wazuh double-escapes eventchannel strings,
+so the decoded paths contain `\\` between parts. The side-by-side comparison against v1
+caught it before deployment. v2 folds any run of backslashes to `/` before matching.
+(EVTX Hunter already undoes the doubling when it reads Wazuh archives.)
 
 ## Adding a detection
 
