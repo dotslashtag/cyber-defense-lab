@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import ssl
 import sys
 import urllib.request
 from pathlib import Path
@@ -33,14 +35,24 @@ def _load(files: list[str]) -> list[dict]:
     return events
 
 
-def _post(url: str, payload: dict) -> int:
+TOKEN_ENV = "EVTX_HUNTER_WEBHOOK_TOKEN"
+
+
+def _post(url: str, payload: dict, token: str | None = None,
+          header: str = "X-Webhook-Token", cafile: str | None = None) -> int:
+    headers = {"Content-Type": "application/json"}
+    if token:
+        headers[header] = token
     req = urllib.request.Request(
         url,
         data=json.dumps(payload).encode(),
-        headers={"Content-Type": "application/json"},
+        headers=headers,
         method="POST",
     )
-    with urllib.request.urlopen(req, timeout=30) as resp:  # noqa: S310 - user-supplied URL by design
+    # A lab CA (e.g. the Nginx ingress on the n8n host) can be trusted without
+    # turning certificate checks off.
+    context = ssl.create_default_context(cafile=cafile) if cafile else None
+    with urllib.request.urlopen(req, timeout=30, context=context) as resp:  # noqa: S310 - user-supplied URL by design
         return resp.status
 
 
@@ -69,8 +81,14 @@ def cmd_hunt(args: argparse.Namespace) -> int:
         if not findings and not args.send_empty:
             print("no findings: webhook not called (use --send-empty to send anyway)", file=sys.stderr)
         else:
-            status = _post(args.webhook, to_json(events, findings, inputs))
-            print(f"webhook: HTTP {status}", file=sys.stderr)
+            # The token comes from the environment only, so it never lands in
+            # shell history or a process listing.
+            token = os.environ.get(TOKEN_ENV)
+            if token and args.webhook.lower().startswith("http://"):
+                print(f"warning: sending {args.webhook_header} over plain HTTP", file=sys.stderr)
+            status = _post(args.webhook, to_json(events, findings, inputs), token,
+                           args.webhook_header, args.ca_file)
+            print(f"webhook: HTTP {status}" + (" (token sent)" if token else ""), file=sys.stderr)
 
     return 1 if findings and args.fail_on_findings else 0
 
@@ -110,6 +128,9 @@ def build_parser() -> argparse.ArgumentParser:
     h.add_argument("--no-tree", action="store_true", help="leave the process tree out of the report")
     h.add_argument("--webhook", help="POST the JSON findings to this URL (e.g. an n8n webhook)")
     h.add_argument("--send-empty", action="store_true", help="call the webhook even with no findings")
+    h.add_argument("--webhook-header", default="X-Webhook-Token",
+                   help=f"header that carries the token from ${TOKEN_ENV} (default: X-Webhook-Token)")
+    h.add_argument("--ca-file", help="CA certificate (PEM) to trust for an https webhook")
     h.add_argument("--fail-on-findings", action="store_true",
                    help="exit with status 1 when anything is found (for scripts and CI)")
     h.set_defaults(func=cmd_hunt)

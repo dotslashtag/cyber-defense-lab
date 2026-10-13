@@ -43,3 +43,48 @@ def test_cli_tree_grep(capsys, sample_path):
     assert main(["tree", str(sample_path), "--grep", "rundll32"]) == 0
     out = capsys.readouterr().out
     assert "rundll32.exe" in out and "whoami.exe" not in out
+
+
+class _Resp:
+    status = 200
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+
+def _capture(monkeypatch):
+    sent = {}
+
+    def fake_urlopen(req, timeout=None, context=None):
+        sent["headers"] = dict(req.header_items())
+        sent["body"] = json.loads(req.data)
+        sent["context"] = context
+        return _Resp()
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+    return sent
+
+
+def test_webhook_sends_token_from_env(monkeypatch, capsys, tmp_path, sample_path, rules_path):
+    sent = _capture(monkeypatch)
+    monkeypatch.setenv("EVTX_HUNTER_WEBHOOK_TOKEN", "test-token-value")
+    code = main(["hunt", str(sample_path), "--rules", str(rules_path), "-o", str(tmp_path / "r.md"),
+                 "--webhook", "https://n8n.example/webhook/evtx-hunter"])
+    assert code == 0
+    assert sent["headers"]["X-webhook-token"] == "test-token-value"
+    assert sent["body"]["tool"] == "evtx-hunter" and sent["body"]["summary"]["findings"] == 6
+    err = capsys.readouterr().err
+    assert "HTTP 200 (token sent)" in err and "test-token-value" not in err
+
+
+def test_webhook_without_token_and_http_warning(monkeypatch, capsys, tmp_path, sample_path, rules_path):
+    sent = _capture(monkeypatch)
+    monkeypatch.delenv("EVTX_HUNTER_WEBHOOK_TOKEN", raising=False)
+    main(["hunt", str(sample_path), "--rules", str(rules_path), "-o", str(tmp_path / "r.md"),
+          "--webhook", "http://n8n.example/webhook/evtx-hunter"])
+    assert "X-webhook-token" not in sent["headers"]
+    assert "plain HTTP" not in capsys.readouterr().err  # only warns when a token is sent
+
