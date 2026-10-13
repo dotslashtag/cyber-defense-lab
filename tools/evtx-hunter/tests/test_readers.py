@@ -41,6 +41,21 @@ def test_wazuh_doubled_backslashes_are_undone():
     assert e["EventID"] == 1
 
 
+def test_wazuh_escaped_quotes_are_undone():
+    # As seen in a real WIN11-OPS01 archives.log (2026-10-13): quoted command lines
+    # arrive as \"C:\\...\" after JSON decoding.
+    raw = '\\"C:\\\\WINDOWS\\\\System32\\\\powershell.exe\\" -ep bypass'
+    obj = {"win": {
+        "system": {"eventID": "1", "channel": "Microsoft-Windows-Sysmon/Operational",
+                   "computer": "h", "systemTime": "2026-10-13T11:28:26.0000000Z"},
+        "eventdata": {"commandLine": raw, "image": "C:\\\\dir\\\\"},
+    }}
+    e = event_from_wazuh(obj)
+    assert e["CommandLine"] == '"C:\\WINDOWS\\System32\\powershell.exe" -ep bypass'
+    assert e["Image"] == "C:\\dir\\"  # a trailing backslash survives
+    assert e["EventID"] == 1
+
+
 def test_archives_log_prefix_and_root_win(tmp_path):
     record = {"win": {"system": {"eventID": "4624", "channel": "Security", "computer": "h",
                                  "systemTime": "2026-09-28T09:20:00Z"},
