@@ -29,6 +29,13 @@ positive:
       IpAddress: '10.10.2.8'
       TargetUserName: 'pb026_user'
 negative:
+  - description: Live 2026-10-13 - WIN11-OPS01 logging on to itself via its own IP (EVTX Hunter false positive, now filtered)
+    event:
+      EventID: 4624
+      LogonType: 3
+      Computer: 'WIN11-OPS01.soc.lab'
+      IpAddress: '10.10.2.9'
+      TargetUserName: 'labuser'
   - description: Live 2026-10-13 - WIN11-PB026 user logging on to the domain controller
     event:
       EventID: 4624

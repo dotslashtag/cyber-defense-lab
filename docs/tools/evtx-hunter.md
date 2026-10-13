@@ -110,6 +110,37 @@ The tool posts a JSON summary; n8n turns it into a TheHive alert. Setup in n8n
     This creates an **alert**, not a response. Containment still goes through the
     lab's signed Slack approval workflow.
 
+## Tested on real logs
+
+On 2026-10-13 I ran EVTX Hunter on a full day of real WIN11-OPS01 events: the agent's
+lines from the Wazuh manager's `archives.log`, **8,040 events** over 11 hours. The day
+held known ground truth (detection tests run that morning, plus a short marked burst of
+discovery, ExecutionPolicy bypass, rundll32 and a Run key), so every finding could be
+checked.
+
+| Time (UTC) | Finding | Ground truth | Verdict |
+|---|---|---|---|
+| 00:40:14 | Run key modified by `reg.exe` (`…\Run\D3v2Test`) | D3 v2 validation write | ✅ true positive |
+| 01:31:56 | Workstation-to-workstation logon from `10.10.2.9` | WIN11-OPS01 logging on to **itself** through its own IP | ❌ **false positive**, fixed (below) |
+| 05:58:28 | Workstation-to-workstation logon from `10.10.2.8` | Real WIN11-PB026 → WIN11-OPS01 hop (D2 v2 test) | ✅ true positive |
+| 11:28:22 | Clustered discovery: 7 tools (whoami, ipconfig, systeminfo, net, net1, tasklist, netstat) | Marked burst | ✅ true positive |
+| 11:28:26 | PowerShell with `-ep bypass` | Marked burst | ✅ true positive |
+| 11:28:27 | Rundll32 spawned by PowerShell (high) | Marked burst | ✅ true positive |
+| 11:28:28 | Run key modified by `reg.exe` (`…\Run\EvtxHunterTest`) | Marked burst | ✅ true positive |
+
+It also stayed quiet where it should: a `reg.exe` write to `Explorer\RunMRU` at 00:40
+(the Run-key rule lists the real autostart keys only) and a burst of failed logons (no
+brute-force rule in the Sigma set; Wazuh covers that).
+
+**Two fixes came out of it**, both now in the repo with tests built from these events:
+
+1. **The self-logon false positive.** The Splunk version of D2 drops a logon whose source
+   is the host's own IP, but Sigma cannot compare two fields, so the Sigma rule could not.
+   It now pairs each workstation with its own address (`filter_self_logon`).
+2. **Escaped quotes in Wazuh data.** Wazuh escapes string values twice; the reader undid
+   the doubled backslashes but left `\"` in front of every quote, so command lines in
+   reports read `\"C:\WINDOWS\…\" -ep bypass`. It now undoes both in one pass.
+
 ## Limits
 
 - Supports the Sigma features the lab's rules use: wildcards, `re`, `cidr`,
@@ -117,5 +148,8 @@ The tool posts a JSON summary; n8n turns it into a TheHive alert. Setup in n8n
 - Reading `.evtx` is slow (pure Python, about 200 events per second); for big
   exports, use the Wazuh JSON or filter first.
 - Process trees need Sysmon Event ID 1.
-- The sample data is synthetic. Tested against a real 2 MB Security log, the
+- The bundled sample data is synthetic; see "Tested on real logs" above for a run on a
+  real day of WIN11-OPS01 events. Tested against a real 2 MB Security log, the
   reader parsed all 2,261 events correctly.
+- Reports are UTF-8. In Windows PowerShell 5, read them with
+  `Get-Content report.md -Encoding UTF8`, or arrows and tree lines show as `â†’`.

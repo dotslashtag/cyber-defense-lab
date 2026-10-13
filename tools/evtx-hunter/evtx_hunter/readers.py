@@ -76,11 +76,16 @@ def read_evtx(path: str | Path) -> Iterator[dict]:
 # -------------------------------------------------------------------- Wazuh JSON
 
 
+_WAZUH_ESCAPE = re.compile(r'\\(["\\])')
+
+
 def _wazuh_value(value):
-    # Wazuh's eventchannel decoder doubles backslashes inside string values
-    # ("C:\\\\Windows\\\\..."), so paths would never match a Sigma rule.
+    # Wazuh's eventchannel decoder escapes string values a second time: every
+    # backslash is doubled and every quote keeps a backslash in front of it. Undo
+    # both in one pass, or paths never match a Sigma rule and command lines show
+    # stray backslash-quote pairs in reports.
     if isinstance(value, str):
-        return value.replace("\\\\", "\\")
+        return _WAZUH_ESCAPE.sub(r"\1", value)
     return value
 
 

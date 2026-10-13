@@ -9,9 +9,10 @@ description: |
   "SOC - Workstation-to-Workstation Lateral Auth" (OP-004 D2).
 
   The workstation hostnames and IP addresses below are lab values; replace them
-  with your own inventory. The Splunk version also drops logons whose source is the
-  receiving host's own IP, which Sigma cannot express; loopback sources are
-  filtered here instead.
+  with your own inventory. A host logging on to itself through its own IP is not
+  lateral movement: Sigma cannot compare two fields, so filter_self_logon pairs each
+  workstation with its own address (the Splunk version compares them directly).
+  Added 2026-10-13 after EVTX Hunter flagged WIN11-OPS01 -> 10.10.2.9 on real logs.
 author: dotslashtag
 date: 2026-10-08
 modified: 2026-10-13
@@ -45,7 +46,14 @@ detection:
       - '127.0.0.1'
       - '::1'
       - '-'
-  condition: all of selection_* and not filter_loopback
+  filter_self_logon:
+    - Computer: 'Win10.soc.lab'
+      IpAddress: '10.10.2.4'
+    - Computer: 'WIN11-OPS01.soc.lab'
+      IpAddress: '10.10.2.9'
+    - Computer: 'WIN11-PB026.soc.lab'
+      IpAddress: '10.10.2.8'
+  condition: all of selection_* and not 1 of filter_*
 fields:
   - Computer
   - IpAddress
