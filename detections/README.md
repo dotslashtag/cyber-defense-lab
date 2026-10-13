@@ -86,6 +86,14 @@ endpoint, then mirrored here; open rows are still waiting for that.
 | `510143` | ✅ **Fixed 2026-10-12.** Parent had to be `powershell.exe`, so `pwsh.exe` (PowerShell 7) was missed. Now `(?i)\\(powershell\|pwsh)\.exe$`; validated live (powershell and pwsh alert, cmd stays quiet) | Done |
 | `510140` | ✅ **Fixed 2026-10-12.** It was never reached on WIN11-OPS01: its parent `92027` no longer fires because the SOCFortress rule `100162` now classifies Sysmon PowerShell process events. It also missed `-ep` / `-exec`. Now `if_sid 92027, 100162` with the wider pattern; validated live (3/3 bypass forms alert, `RemoteSigned` stays quiet) | Done |
 
+**Response routing (2026-10-13).** Once `510130`–`510132` could fire, they reached no n8n
+workflow (the level-10 catch-all integrations are disabled). They are now routed to the lab's
+approval-gated Brute Force v2 workflow alongside `510120`–`510122`: each alert opens a TheHive
+alert and a Slack decision card, and nothing executes without a signed analyst approval.
+`510132` gets its own Critical-severity title (`Possible account compromise: <user> after brute
+force from <ip>`). Validated live: one burst produced three alerts (510130 and 510131 High,
+510132 Critical), all left at *Investigate First*. `510133` (L6) is intentionally not routed.
+
 ## D2 v2: workstation lookup (2026-10-13)
 
 D2 v1 named its workstations inside the search: two Wazuh agent names and an IP
