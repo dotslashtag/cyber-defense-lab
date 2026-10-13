@@ -101,15 +101,16 @@ does not change when the agent is re-registered. Adding a workstation is one CSV
 | Rows only one version returns | none | none |
 | Self-logon on WIN11-OPS01 (source = destination), live | quiet | quiet |
 | WIN11-PB026 user logging on to the DC (thousands of DC logons), live | quiet | quiet |
-| Live hop involving WIN11-PB026 | n/a | **not yet proven**, see below |
+| Live hop WIN11-PB026 → Windows10 (`pb026_user`, type 3, 2026-10-13 03:17:39 UTC) | **missed** (10.10.2.8 not in its list) | **alert** |
 
-**Why the PB026 hop is not proven live yet.** Every logon between WIN11-OPS01 and
-WIN11-PB026 failed in both directions (`0xc000006d` / `0x0`, NTLM and Kerberos, any
-account, no password involved), while OPS01 → Win10 works. Typing, NTLM settings,
-clock skew and the domain trust were each ruled out. The cause: both VMs share the same
-machine SID (`S-1-5-21-356425069-…`), so they were cloned without Sysprep, and current
-Windows refuses network logons between machines with duplicate SIDs. The fix (Sysprep
-PB026) is on the lab backlog; the PB026 hop will be re-tested afterwards.
+**Lab findings from testing.** The first attempt, PB026 ↔ WIN11-OPS01, failed in both
+directions (`0xc000006d` / `0x0`, NTLM and Kerberos, any account, no password involved).
+Typing, NTLM settings, clock skew and the domain trust were each ruled out: WIN11-OPS01
+was cloned from PB026 without Sysprep, so both share one machine SID and current Windows
+refuses network logons between them (Sysprep is on the lab backlog). The hop was then
+run PB026 → Windows10 instead, which first looked "missed" until Splunk showed the
+Windows10 agent had stopped three minutes after it reconnected (a failed
+`Restart-Service`), not a detection gap. Once the agent was running, D2 v2 fired.
 
 ## D3 v2: tightened and redeployed (2026-10-13)
 
