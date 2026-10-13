@@ -102,15 +102,18 @@ does not change when the agent is re-registered. Adding a workstation is one CSV
 | Self-logon on WIN11-OPS01 (source = destination), live | quiet | quiet |
 | WIN11-PB026 user logging on to the DC (thousands of DC logons), live | quiet | quiet |
 | Live hop WIN11-PB026 → Windows10 (`pb026_user`, type 3, 2026-10-13 03:17:39 UTC) | **missed** (10.10.2.8 not in its list) | **alert** |
+| Live hop WIN11-PB026 → WIN11-OPS01 after Sysprep (`pb026_user`, type 3, 2026-10-13 05:58:30 UTC) | **missed** | **alert** |
 
 **Lab findings from testing.** The first attempt, PB026 ↔ WIN11-OPS01, failed in both
 directions (`0xc000006d` / `0x0`, NTLM and Kerberos, any account, no password involved).
 Typing, NTLM settings, clock skew and the domain trust were each ruled out: WIN11-OPS01
 was cloned from PB026 without Sysprep, so both share one machine SID and current Windows
-refuses network logons between them (Sysprep is on the lab backlog). The hop was then
+refuses network logons between them. The hop was first
 run PB026 → Windows10 instead, which first looked "missed" until Splunk showed the
 Windows10 agent had stopped three minutes after it reconnected (a failed
 `Restart-Service`), not a detection gap. Once the agent was running, D2 v2 fired.
+PB026 was then Sysprepped (new machine SID) and rejoined; the PB026 → WIN11-OPS01
+hop that had failed every time now succeeds, and D2 v2 caught it as well.
 
 ## D3 v2: tightened and redeployed (2026-10-13)
 
