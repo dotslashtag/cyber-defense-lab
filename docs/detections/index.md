@@ -114,10 +114,10 @@ controller, a loopback logon, a console logon and a failed logon must not.
     fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).
 
 !!! note "Limits"
-    D2 v2 (2026-10-13) reads its workstations from a lookup and caught a live
-    WIN11-PB026 → Windows10 hop that v1 would have missed. Testing also found that
-    WIN11-OPS01 was cloned from PB026 without Sysprep (same machine SID), so logons
-    between those two fail; that is a lab fix on the backlog, not a detection gap.
+    D2 v2 (2026-10-13) reads its workstations from a lookup and caught two live
+    WIN11-PB026 hops that v1 would have missed. Testing also found that WIN11-OPS01
+    had been cloned from PB026 without Sysprep (same machine SID), so logons between
+    the two always failed; PB026 was Sysprepped and the hop now works.
     The Wazuh parent rule and decoder only run on a real Wazuh manager, and the
     Splunk searches were validated against live lab data rather than in CI. Sample
     events are representative events based on lab validation runs, not raw log exports.
