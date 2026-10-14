@@ -1,0 +1,66 @@
+# Detection Heartbeat: which probe should trip which detection, and where the verifier looks.
+# The verifier is Splunk-only: Wazuh alerts are forwarded to index=wazuh (sourcetype wazuh_alerts),
+# raw Windows events to index=wazuh_archives.
+version: 1
+marker_format: "HB-<HOST>-<yyyyMMddHHmm>"   # UTC, set by hb-probe.ps1
+verify_after_minutes: 35                    # run the verifier this long after the probe starts
+window_minutes: 40                          # search window starts 5 min before the probe
+
+probes:
+  P1:
+    action: "discovery burst (whoami, hostname, ipconfig /all, systeminfo, net user, tasklist, netstat -ano)"
+    evidence: {search: verifier/v1_probe_evidence.spl, sysmon_eid: 1, marker_field: win.eventdata.parentCommandLine}
+  P2:
+    action: "PowerShell Start-Process rundll32.exe"
+    evidence: {search: verifier/v1_probe_evidence.spl, sysmon_eid: 1, marker_field: win.eventdata.parentCommandLine}
+  P3:
+    action: "HKCU Run value <marker> -> notepad.exe, removed after 5 s"
+    evidence: {search: verifier/v1_probe_evidence.spl, sysmon_eid: 13, marker_field: win.eventdata.targetObject}
+
+detections:
+  - id: D1
+    probe: P1
+    kind: splunk_search
+    saved_search: "SOC - Clustered Discovery Activity"
+    search: verifier/v3_d1_rerun.spl
+    match: host                 # D1 output has no command lines, so match the host in the window
+  - id: "510143"
+    probe: P2
+    kind: wazuh_alert
+    rule_id: "510143"
+    search: verifier/v2_wazuh_alerts.spl
+    match: marker               # data.win.eventdata.parentCommandLine
+  - id: "510150"
+    probe: P3
+    kind: wazuh_alert
+    rule_id: "510150"
+    search: verifier/v2_wazuh_alerts.spl
+    match: marker               # data.win.eventdata.targetObject
+  - id: D3
+    probe: P3
+    kind: splunk_search
+    saved_search: "SOC - Run/RunOnce Key Modified"
+    search: verifier/v4_d3_rerun.spl
+    match: marker               # target_object
+
+# Phase 1 induced failure: a rule id that does not exist. The verifier must report
+# DEAD DETECTION for it while 510143 passes. Verifier-side only; nothing changes on the manager.
+canaries:
+  - id: "599143"
+    probe: P2
+    kind: wazuh_alert
+    rule_id: "599143"
+    search: verifier/v2_wazuh_alerts.spl
+    match: marker
+    expect: DEAD DETECTION
+
+health:
+  search: verifier/v0_telemetry_freshness.spl
+  stale_after_minutes: 30
+  scheduler_check: verifier/v5_alert_fired.spl
+
+# Verdicts, per detection and run:
+#   probe evidence yes + alert yes -> PASS
+#   probe evidence yes + alert no  -> DEAD DETECTION
+#   probe evidence no  + H0 FRESH  -> PROBE NOT RUN
+#   probe evidence no  + H0 STALE  -> NO TELEMETRY
