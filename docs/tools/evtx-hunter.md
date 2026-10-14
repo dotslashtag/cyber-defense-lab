@@ -89,28 +89,53 @@ flowchart LR
 
 ## Send findings to TheHive through n8n
 
-The tool posts a JSON summary; n8n turns it into a TheHive alert. Setup in n8n
-(no code):
+In the lab, one `--webhook` call turns a hunt into **one TheHive alert** for an analyst to
+triage. It creates an alert only: no case, no responder, no containment.
 
-1. **Webhook** node: method `POST`, path `evtx-hunter`, **Header Auth** with header
-   `X-Webhook-Token`. The tool sends that header when the `EVTX_HUNTER_WEBHOOK_TOKEN`
-   environment variable is set, so the token never appears on the command line.
-2. **IF** node: `{{ $json.body.summary.findings }}` is greater than `0`.
-3. **TheHive** node (*Alert → Create*):
-    - Title: `EVTX Hunter: {{ $json.body.summary.findings }} findings on {{ $json.body.summary.hosts.join(", ") }}`
-    - Severity: `{{ $json.body.summary.thehive_severity }}` (1 low … 4 critical)
-    - Type `evtx-hunter`, Source `lab`, Source Ref `{{ $json.body.generated }}`
-    - Description: the finding titles, e.g. `{{ $json.body.findings.map(f => "- " + f.title + " (" + f.host + ")").join("\n") }}`
-4. Run it:
+```text
+evtx-hunter ──HTTPS + X-Webhook-Token──▶ Nginx ingress (/ingest/evtx-hunter)
+                                          │ checks the token, strips it, 5 MB body limit
+                                          ▼
+                                n8n "EVTX Hunter Findings → TheHive Alert"
+                                          │ validate → build alert → create → respond
+                                          ▼
+                                TheHive alert (type evtx-hunter, TLP:AMBER)
+```
 
-    ```powershell
-    # prompts without echoing the token; works in Windows PowerShell 5.1 and 7
-    $s = Read-Host "Webhook token" -AsSecureString
-    $env:EVTX_HUNTER_WEBHOOK_TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
-    evtx-hunter hunt Sysmon.evtx Security.evtx --webhook https://<n8n-host>/webhook/evtx-hunter --ca-file lab-ca.pem
-    ```
+**How it is built**
 
-    Over plain `http://` the tool still works but warns that the token travels unencrypted.
+- **Ingress.** The same Nginx proxy that fronts the lab's Wazuh webhooks owns authentication:
+  the route `/ingest/evtx-hunter` checks `X-Webhook-Token` against its own token (not the
+  Wazuh one), strips it, and forwards to n8n. Direct `/webhook/evtx-hunter` paths are
+  blocked, and n8n itself listens on localhost only.
+- **Client.** The token comes from the `EVTX_HUNTER_WEBHOOK_TOKEN` environment variable,
+  never the command line; `--ca-file` trusts the lab CA instead of disabling TLS checks.
+- **n8n.** A code node rejects anything that is not an EVTX Hunter report, caps it at 50
+  findings, and builds the alert: title, severity from the report's highest level, a
+  Markdown table of findings, the first evidence lines as `key=value`, ATT&CK IDs as tags,
+  and each host as a `hostname` observable.
+- **Dedup.** The alert's `sourceRef` is a hash of the sorted `(rule, time, host)` findings, so
+  sending the same report twice cannot create two alerts: TheHive refuses the second and
+  the workflow answers `duplicate`.
+
+```powershell
+# Windows PowerShell 5.1 or 7: prompt for the token without echoing it
+$s = Read-Host "Webhook token" -AsSecureString
+$env:EVTX_HUNTER_WEBHOOK_TOKEN = [Runtime.InteropServices.Marshal]::PtrToStringBSTR([Runtime.InteropServices.Marshal]::SecureStringToBSTR($s))
+evtx-hunter hunt Sysmon.evtx Security.evtx --webhook https://<proxy>/ingest/evtx-hunter --ca-file lab-ca.pem
+```
+
+**Validated live (2026-10-14)**
+
+| Test | Result |
+|---|---|
+| No token / direct n8n path | 403 / 404 at the proxy |
+| Synthetic sample (6 findings) | TheHive alert created, severity High, 2 host observables |
+| The same report again | No second alert: TheHive refused the duplicate `sourceRef`, workflow answered `duplicate` |
+| Real WIN11-OPS01 day (8,040 events) | TheHive alert created: 6 findings, 1 host |
+
+A wrong token or an inactive workflow makes the CLI exit with code 2 and a one-line
+message instead of a stack trace.
 
 !!! tip "Keep the human in the loop"
     This creates an **alert**, not a response. Containment still goes through the

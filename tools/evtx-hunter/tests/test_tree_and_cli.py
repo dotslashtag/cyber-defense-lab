@@ -88,3 +88,16 @@ def test_webhook_without_token_and_http_warning(monkeypatch, capsys, tmp_path, s
     assert "X-webhook-token" not in sent["headers"]
     assert "plain HTTP" not in capsys.readouterr().err  # only warns when a token is sent
 
+
+def test_webhook_http_error_is_reported_not_raised(monkeypatch, capsys, tmp_path, sample_path, rules_path):
+    import urllib.error
+
+    def refuse(req, timeout=None, context=None):
+        raise urllib.error.HTTPError(req.full_url, 403, "Forbidden", {}, None)
+
+    monkeypatch.setattr("urllib.request.urlopen", refuse)
+    code = main(["hunt", str(sample_path), "--rules", str(rules_path), "-o", str(tmp_path / "r.md"),
+                 "--webhook", "https://n8n.example/ingest/evtx-hunter"])
+    assert code == 2
+    assert "HTTP 403 Forbidden" in capsys.readouterr().err
+
