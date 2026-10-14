@@ -1,0 +1,11 @@
+```Detection Heartbeat V0 (H0): newest Windows event per workstation in the soc_workstations lookup. Matches on the Windows computer name, so a re-added Wazuh agent does not matter.```
+index=wazuh_archives "EventChannel" earliest=-30m
+| rex field=_raw "\"computer\":\"(?<computer>[^\".]+)"
+| eval host=upper(computer)
+| stats max(_time) as last_seen by host
+| append [| inputlookup soc_workstations | eval host=upper(host) | fields host]
+| stats max(last_seen) as last_seen by host
+| lookup soc_workstations host OUTPUT ip
+| where isnotnull(ip)
+| eval age_min=round((now()-last_seen)/60,1), h0=if(isnotnull(last_seen),"FRESH","STALE")
+| table host ip last_seen age_min h0

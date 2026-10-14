@@ -1,0 +1,6 @@
+```Detection Heartbeat V2: Wazuh alerts (forwarded to Splunk) that carry the run marker. Replace $marker$ and $rule_ids$ (e.g. "510143","510150").```
+index=wazuh sourcetype=wazuh_alerts "$marker$"
+| spath path=rule.id output=rule_id
+| spath path=agent.name output=agent_name
+| where rule_id IN ($rule_ids$)
+| stats count min(_time) as first by rule_id agent_name

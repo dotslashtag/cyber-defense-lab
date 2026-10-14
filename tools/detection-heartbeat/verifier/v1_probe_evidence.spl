@@ -1,0 +1,12 @@
+```Detection Heartbeat V1: Sysmon events that carry the run marker, grouped by probe. Replace $marker$; time range = the probe window.```
+index=wazuh_archives "EventChannel" "$marker$"
+| rex field=_raw "EventChannel (?<_json>\{.*\})$"
+| spath input=_json path=win.system.eventID output=eid
+| spath input=_json path=win.eventdata.image output=image
+| eval img=lower(image)
+| eval probe=case(
+    eid="1" AND match(img,"rundll32\.exe$"),"P2",
+    eid="1" AND match(img,"(whoami|hostname|ipconfig|systeminfo|net1?|tasklist|netstat)\.exe$"),"P1",
+    eid="13","P3",
+    true(),"other")
+| stats count min(_time) as first max(_time) as last values(eid) as eids by probe

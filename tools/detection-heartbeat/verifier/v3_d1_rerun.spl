@@ -1,0 +1,3 @@
+```Detection Heartbeat V3: re-run D1 over the probe window for one host. Replace $host$.```
+| savedsearch "SOC - Clustered Discovery Activity"
+| search agent_name="$host$"

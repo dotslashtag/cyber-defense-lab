@@ -44,6 +44,7 @@ jobs:
           cache-dependency-path: requirements-detections.txt
       - run: pip install -r requirements-detections.txt -e tools/evtx-hunter
       - run: pytest detections/tests -v
+      - run: pytest tools/detection-heartbeat/tests -v
 
   evtx-hunter:
     name: EVTX Hunter tests

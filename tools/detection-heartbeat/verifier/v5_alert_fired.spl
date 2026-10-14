@@ -1,0 +1,5 @@
+```Detection Heartbeat V5: did the scheduled D1/D3 alerts actually fire in the window? A re-run can pass while the scheduled alert was throttled or disabled.```
+index=_audit action=alert_fired
+    ss_name IN ("SOC - Clustered Discovery Activity","SOC - Run/RunOnce Key Modified")
+| table _time ss_name trigger_time severity
+| sort - _time

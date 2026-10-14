@@ -1,0 +1,3 @@
+```Detection Heartbeat V4: re-run D3 over the probe window and keep the probe's Run value. Replace $marker$.```
+| savedsearch "SOC - Run/RunOnce Key Modified"
+| search target_object="*$marker$*"

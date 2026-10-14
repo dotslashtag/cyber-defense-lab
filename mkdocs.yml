@@ -96,6 +96,7 @@ nav:
       - Phishing Analyzer: tools/phish-analyzer.md
       - EVTX Hunter: tools/evtx-hunter.md
       - Beacon Hunter: tools/beacon-hunter.md
+      - Detection Heartbeat: tools/detection-heartbeat.md
   - Casebook:
       - casebook/index.md
       - "CASE-OP001: Commodity intrusion": casebook/op-001-commodity-intrusion.md
