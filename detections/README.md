@@ -142,6 +142,11 @@ Publishing D3 found three problems, now fixed in the lab and in
 | Live `reg add ...\Run\D3v2Test` on WIN11-OPS01 | alert | alert |
 | Live `reg add ...\Explorer\RunMRU\z` on WIN11-OPS01 | **false positive** | quiet |
 
+**Throttle fixed (2026-10-14).** D3 triggered "Once" with a 15-minute throttle and no fields,
+so one Run-key alert on any host silenced D3 on **every** host for 15 minutes. It now triggers
+for each result and throttles per `agent_name`, like D1 and D2. Found while designing the lab's
+Detection Heartbeat, whose scheduled probes would otherwise have blinded D3 lab-wide.
+
 **Lesson: test against real data, not just samples.** The first v2 draft matched
 `\currentversion\run\` with single backslashes and passed every Sigma test, but on the
 archive data it missed **all 12** real events: Wazuh double-escapes eventchannel strings,
