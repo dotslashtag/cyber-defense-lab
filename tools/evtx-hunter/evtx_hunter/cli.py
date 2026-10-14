@@ -7,6 +7,7 @@ import json
 import os
 import ssl
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -86,8 +87,16 @@ def cmd_hunt(args: argparse.Namespace) -> int:
             token = os.environ.get(TOKEN_ENV)
             if token and args.webhook.lower().startswith("http://"):
                 print(f"warning: sending {args.webhook_header} over plain HTTP", file=sys.stderr)
-            status = _post(args.webhook, to_json(events, findings, inputs), token,
-                           args.webhook_header, args.ca_file)
+            try:
+                status = _post(args.webhook, to_json(events, findings, inputs), token,
+                               args.webhook_header, args.ca_file)
+            except urllib.error.HTTPError as exc:
+                # e.g. 403 = token rejected by the ingress, 404 = workflow not active
+                print(f"error: webhook refused the report: HTTP {exc.code} {exc.reason}", file=sys.stderr)
+                return 2
+            except (urllib.error.URLError, OSError) as exc:
+                print(f"error: webhook unreachable: {getattr(exc, 'reason', exc)}", file=sys.stderr)
+                return 2
             print(f"webhook: HTTP {status}" + (" (token sent)" if token else ""), file=sys.stderr)
 
     return 1 if findings and args.fail_on_findings else 0

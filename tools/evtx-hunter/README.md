@@ -42,6 +42,7 @@ evtx-hunter tree Sysmon.evtx --grep rundll32
 | `--webhook URL` | POST the JSON findings to a URL; skipped when there are no findings unless `--send-empty` |
 | `--webhook-header NAME` | Header that carries the token from the `EVTX_HUNTER_WEBHOOK_TOKEN` environment variable (default `X-Webhook-Token`). The token is never a command-line argument |
 | `--ca-file PEM` | Trust this CA for an `https` webhook (e.g. a lab CA) instead of turning certificate checks off |
+| (exit code 2) | The webhook refused the report (for example HTTP 403 bad token, 404 workflow inactive) or was unreachable |
 | `--fail-on-findings` | Exit 1 if anything is found (for scripts) |
 | `--no-tree` | Leave the process tree out of the report |
 
