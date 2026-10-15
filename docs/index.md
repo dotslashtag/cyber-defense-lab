@@ -11,7 +11,7 @@ hide:
 
 # 10+ years running enterprise infrastructure. Now I attack it and build the detections that catch it.
 
-A segmented home SOC built like a small enterprise on VMware Workstation: an Active Directory domain behind an OPNsense firewall with Suricata, monitored by Wazuh, Splunk and Sysmon, with n8n, TheHive and MISP for response. I run it against MITRE Caldera and Kali. Every attack is scored honestly, every miss becomes a detection, and every detection is tested and re-run blind.
+A home SOC built like a small enterprise: an Active Directory domain behind OPNsense and Suricata, with management, target and attack zones separated under default-deny. It’s monitored by Wazuh, Splunk and Sysmon, with n8n, TheHive and MISP for human-approved response. I attack it with MITRE Caldera and Kali, score each step Prevented, Alerted, Logged-only or Missed, turn every miss into a tested detection, and re-run it blind.
 
 [See the results](operations/results.md){ .md-button .md-button--primary }
 [Read a case](casebook/op-002-stealth-tradecraft.md){ .md-button }
