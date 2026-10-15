@@ -31,7 +31,7 @@ Outcomes are scored honestly:
 | Discovery | T1087.002 · T1082 · T1016 · T1057 · T1033 · T1018 | 🟥 Missed (native tools) | ✅ Closed by D1, clustered discovery |
 | Persistence | T1547.001 Run keys | 🟩 Alerted | ✅ Closed by D3, works for any writer |
 | Lateral Movement | T1021.002 · T1550.002 · T1078 | 🟥 Missed within a zone | ✅ Closed by D2, workstation-to-workstation auth |
-| Command & Control | T1071.001 Web C2 | 🟩 on connect · 🟨 sustained beacon | ⛏ Backlog: beaconing (→ Beacon Hunter) |
+| Command & Control | T1071.001 Web C2 | 🟩 on connect · 🟨 sustained beacon | ⛏ Backlog: beaconing detection |
 | Collection | T1005 · T1565.001 | 🟩 canary · 🟨 off-canary | ⛏ Backlog: wider file monitoring |
 | Exfiltration | T1041 | 🟩 to known IOC · 🟥 unknown destination | ⛏ Backlog: IOC-independent egress |
 

@@ -7,13 +7,11 @@ hide:
 
 <div class="cdl-hero" markdown>
 
-<p class="cdl-kicker">Joseph Henry Cariazo · SOC analyst · detection engineering · security automation</p>
+<p class="cdl-kicker">Joseph Henry Cariazo · security engineering · detection engineering · infrastructure security</p>
 
-# I build a SOC, attack it, and fix what it misses.
+# 10+ years running enterprise infrastructure. Now I attack it and build the detections that catch it.
 
-A segmented home SOC (Wazuh, Splunk, Sysmon, n8n, TheHive, MISP) that I run
-against MITRE Caldera and Kali. Every attack is scored honestly, every miss
-becomes a detection, and every detection is tested and re-run blind.
+A segmented home SOC built like a small enterprise on VMware Workstation: an Active Directory domain behind an OPNsense firewall with Suricata, monitored by Wazuh, Splunk and Sysmon, with n8n, TheHive and MISP for response. I run it against MITRE Caldera and Kali. Every attack is scored honestly, every miss becomes a detection, and every detection is tested and re-run blind.
 
 [See the results](operations/results.md){ .md-button .md-button--primary }
 [Read a case](casebook/op-002-stealth-tradecraft.md){ .md-button }
@@ -26,7 +24,7 @@ becomes a detection, and every detection is tested and re-run blind.
 <div class="cdl-stat"><div class="n">4</div><div class="l">scored purple-team operations across 9 ATT&CK tactics</div></div>
 <div class="cdl-stat"><div class="n">17</div><div class="l">ATT&CK techniques exercised end to end</div></div>
 <div class="cdl-stat"><div class="n">4 / 5</div><div class="l">techniques found cold in the blind re-run, decoy ignored</div></div>
-<div class="cdl-stat"><div class="n">84</div><div class="l">automated tests on the detections and tools, run in CI</div></div>
+<div class="cdl-stat"><div class="n">123</div><div class="l">automated tests on the detections and tools, run in CI</div></div>
 <div class="cdl-stat"><div class="n">0</div><div class="l">automatic containment actions: every response waits for a human</div></div>
 </div>
 
@@ -98,7 +96,7 @@ into a working detection; amber = still logged-only, on the backlog.</figcaption
     ---
 
     EVTX Hunter: triage Windows logs with the same rules, rebuild process trees,
-    and send findings to TheHive. More tools on the way.
+    and send findings to TheHive.
 
     [:octicons-arrow-right-24: Tools](tools/index.md)
 

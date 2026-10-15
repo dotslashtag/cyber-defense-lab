@@ -122,7 +122,7 @@ Stages are listed in the order they were run. Outcome key:
 |---|---|---|
 | Malware launch hidden in a rule with ~155 false positives a week | Tune `100606`; add a precise "unsigned exe from AppData launched by a script host" rule | Backlog |
 | PowerShell Run-key write not alerted by Wazuh | New Wazuh rule `510150` (any script host writing a Run key) | ✅ Fixed 2026-09-25, [see detections](../detections/index.md) |
-| C2 alert fires on the first connection only | Beaconing detection based on timing, not just IOC matches | Backlog → [Beacon Hunter](../tools/beacon-hunter.md) |
+| C2 alert fires on the first connection only | Beaconing detection based on timing, not just IOC matches | Backlog |
 | File monitoring for the decoy only on one host | File monitoring built into every endpoint's baseline image; raise its severity | ✅ In the OP-002 endpoint baseline |
 
 ## 9. Analyst notes

@@ -84,5 +84,5 @@ correlations; real-time Wazuh rules alerted within seconds.
 ## What I'd do next
 
 1. **D4: collection and staging** beyond the decoy folder (staging folders, bulk copies, zips in temp).
-2. **Beaconing and egress anomaly detection** for sustained C2 and exfiltration to unknown addresses (the [Beacon Hunter](../tools/beacon-hunter.md) tool).
+2. **Beaconing and egress anomaly detection** for sustained C2 and exfiltration to unknown addresses.
 3. **Tune the noise floor**: the rules that buried real alerts under ~1,457 low-value alerts in two hours.

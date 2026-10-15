@@ -1,7 +1,7 @@
 # Cyber Defense Lab
 
 The public part of my home SOC lab, cleaned up for sharing. It holds the
-detections, SOC analyzer tools, incident reports and portfolio site that came out
+detections, SOC tools, incident reports and portfolio site that came out
 of running a full detect → investigate → respond loop against emulated attacks.
 
 **Portfolio site:** https://dotslashtag.github.io/cyber-defense-lab/
@@ -14,9 +14,7 @@ of running a full detect → investigate → respond loop against emulated attac
 | `detections/` | Detection-as-code: Sigma, Wazuh XML and Splunk SPL, tested in CI against sample logs | ✅ Week 2 |
 | `casebook/` | Incident reports for purple-team operations OP-001 to OP-003 | ✅ Week 3 |
 | `tools/evtx-hunter/` | Sysmon/EVTX triage: process trees, Sigma matching, timelines | ✅ Week 4 |
-| `tools/phish-analyzer/` | Phishing `.eml` analyzer (CLI plus a browser demo; files never leave your browser) | ⏳ Week 5 |
-| `tools/beacon-hunter/` | PCAP/Zeek beaconing and IOC-independent egress detection | ⏳ Week 6 |
-| `n8n-workflows/` | Cleaned-up SOAR workflow exports (enrichment, human-approved response) | ⏳ |
+| `tools/detection-heartbeat/` | Scheduled probes that check the detections still fire (paused: built and tested, not yet run on a host) | ⏸ |
 
 ## The lab behind it
 
