@@ -6,5 +6,13 @@
 | 2 | Detection-as-code: Wazuh XML, Splunk SPL, Sigma, CI tests | ✅ |
 | 3 | Casebook: OP-001 to OP-003 incident reports | ✅ |
 | 4 | EVTX Hunter | ✅ |
-| 5 | Phishing Analyzer (CLI + browser demo) | ⏳ |
-| 6 | Beacon Hunter + final polish | ⏳ |
+
+## Next
+
+Finishing and defending what is here comes before adding anything new.
+
+| Next | Why |
+|---|---|
+| Publish the OP-004 blind re-run as a case | The strongest result in the lab, written up with the one miss shown |
+| D4: collection and staging detection | The one technique the blind re-run did not catch |
+| Beaconing and IOC-independent egress detection | The remaining amber rows in the coverage map |

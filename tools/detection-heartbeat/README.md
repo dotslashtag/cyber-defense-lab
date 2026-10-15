@@ -1,5 +1,8 @@
 # Detection Heartbeat
 
+> **Status: paused.** The probe, manifest and searches are built and tested in CI, and the
+> searches were dry-run in the lab. The probe has not yet been run on a host.
+
 Answers one question on a schedule: **"Do our detections still work right now?"**
 
 A scheduled task runs harmless, marked test actions on a workstation. Later, a verifier

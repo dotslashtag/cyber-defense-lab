@@ -18,7 +18,7 @@ long-running C2 channel raised nothing after its first connection, and **a file
 was successfully exfiltrated with no alert** because its destination was one IP
 away from a listed address. The lesson: the SOC caught *tools and known
 indicators*, not *attacker behaviour*. **Top recommendation:** detections based on
-behaviour, which became OP-004 (D1, D3) and the Beacon Hunter tool.
+behaviour, which became OP-004 (D1, D3) and the beaconing backlog item.
 
 <figure class="cdl-wide" markdown>
 ![OP-002 master timeline: six quiet phases with outcomes](../assets/img/timeline-op002.svg)
@@ -125,7 +125,7 @@ the L13 alert at C2 check-in and nearly mis-scored that stage.
 |---|---|---|
 | Native discovery is invisible | **D1:** alert on 4+ different discovery tools on one host within 10 minutes | ✅ OP-004, [Detections](../detections/index.md) |
 | Run-key search title says "script host" but it catches any writer | **D3:** renamed to "Run/RunOnce Key Modified" | ✅ OP-004 |
-| Ongoing C2 and exfiltration to unknown addresses | Beaconing and unusual-egress detection that doesn't need an IOC list | Backlog → [Beacon Hunter](../tools/beacon-hunter.md) |
+| Ongoing C2 and exfiltration to unknown addresses | Beaconing and unusual-egress detection that doesn't need an IOC list | Backlog |
 | Collection outside the decoy folder | Watch for staging folders, bulk copies and zips in temp | Backlog |
 | Alert fatigue (~1,457 alerts in 2 hours) | Tune the low-value rules flooding the queue | Backlog |
 
