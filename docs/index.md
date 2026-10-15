@@ -24,6 +24,7 @@ A home SOC built like a small enterprise: an Active Directory domain behind OPNs
 
 </div>
 
+<!-- STAT TILES -->
 <div class="cdl-stats" markdown>
 <div class="cdl-stat"><div class="n">4</div><div class="l">scored purple-team operations across 9 ATT&CK tactics</div></div>
 <div class="cdl-stat"><div class="n">17</div><div class="l">ATT&CK techniques exercised end to end</div></div>
