@@ -7,12 +7,16 @@ hide:
 
 <div class="cdl-hero" markdown>
 
+<!-- KICKER: small teal line above the headline (name + target roles) -->
 <p class="cdl-kicker">Joseph Henry Cariazo · security engineering · detection engineering · infrastructure security</p>
 
+<!-- HEADLINE: the one big claim (the # makes it the largest heading) -->
 # 10+ years running enterprise infrastructure. Now I attack it and build the detections that catch it.
 
+<!-- SUMMARY: 2–3 sentences under the headline that back up the claim -->
 A home SOC built like a small enterprise: an Active Directory domain behind OPNsense and Suricata, with management, target and attack zones separated under default-deny. It’s monitored by Wazuh, Splunk and Sysmon, with n8n, TheHive and MISP for human-approved response. I attack it with MITRE Caldera and Kali, score each step Prevented, Alerted, Logged-only or Missed, turn every miss into a tested detection, and re-run it blind.
 
+<!-- BUTTONS -->
 [See the results](operations/results.md){ .md-button .md-button--primary }
 [Read a case](casebook/op-002-stealth-tradecraft.md){ .md-button }
 [Browse the code](https://github.com/dotslashtag/cyber-defense-lab){ .md-button }
