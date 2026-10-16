@@ -1,5 +1,9 @@
 # The Lab
 
+<!-- PAGE: The Lab (section front page)
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/lab/
+     Menu: The Lab -->
+
 A segmented home SOC running in VMware Workstation, built to emulate a small
 enterprise and the security team that defends it.
 

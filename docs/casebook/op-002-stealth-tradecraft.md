@@ -1,5 +1,9 @@
 # CASE-OP002 · Quiet Intrusion Using Built-In Tools
 
+<!-- PAGE: CASE-OP002: Quiet intrusion
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/casebook/op-002-stealth-tradecraft/
+     Menu: Casebook > CASE-OP002 -->
+
 | **Case** | CASE-OP002 (purple-team operation OP-002) |
 |---|---|
 | **Dates** | 2026-09-25 to 2026-09-28 |
@@ -20,6 +24,7 @@ away from a listed address. The lesson: the SOC caught *tools and known
 indicators*, not *attacker behaviour*. **Top recommendation:** detections based on
 behaviour, which became OP-004 (D1, D3) and the beaconing backlog item.
 
+<!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>
 ![OP-002 master timeline: six quiet phases with outcomes](../assets/img/timeline-op002.svg)
 <figcaption>Master timeline. Three phases missed, one logged-only: the gaps that drove OP-004. Click to zoom.</figcaption>
@@ -86,6 +91,7 @@ behaviour, which became OP-004 (D1, D3) and the beaconing backlog item.
 | Destination | `10.10.3.3` (on the IOC list) | `10.10.3.5` (not on it) |
 | Result | `510144` L12 alert | No alert |
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>

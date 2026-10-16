@@ -1,5 +1,9 @@
 # CASE-OP003 · Lateral Movement Between Workstations
 
+<!-- PAGE: CASE-OP003: Lateral movement
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/casebook/op-003-lateral-movement/
+     Menu: Casebook > CASE-OP003 -->
+
 | **Case** | CASE-OP003 (purple-team operation OP-003) |
 |---|---|
 | **Dates** | 2026-09-28 to 2026-09-29 |
@@ -19,6 +23,7 @@ and Windows' remote token filtering blocked execution. So this was a **detection
 gap but a prevention success**. **Top recommendation:** alert on
 workstation-to-workstation logons, which became OP-004 D2.
 
+<!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>
 ![OP-003 master timeline: reachability prevented, lateral auth missed, execution prevented](../assets/img/timeline-op003.svg)
 <figcaption>Master timeline: a detection blind spot between two prevention wins. Click to zoom.</figcaption>
@@ -68,6 +73,7 @@ workstation-to-workstation logons, which became OP-004 D2.
 
 Only the source network changed, and the alert went from level 14 to nothing.
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>

@@ -1,9 +1,14 @@
 # EVTX Hunter
 
+<!-- PAGE: EVTX Hunter
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/tools/evtx-hunter/
+     Menu: Tools > EVTX Hunter -->
+
 **Triage Windows event logs from the command line:** run the lab's Sigma rules
 over `.evtx` exports or Wazuh archives, rebuild the process tree, and get a report
 an analyst can attach to a case, or send the findings straight to n8n.
 
+<!-- BUTTONS: edit the text in [ ] and the link in ( ); keep { .md-button } -->
 [:material-github: Source and README](https://github.com/dotslashtag/cyber-defense-lab/tree/main/tools/evtx-hunter){ .md-button .md-button--primary }
 [:material-file-document: Full sample report](https://github.com/dotslashtag/cyber-defense-lab/blob/main/tools/evtx-hunter/samples/op002-style-report.md){ .md-button }
 
@@ -137,6 +142,7 @@ evtx-hunter hunt Sysmon.evtx Security.evtx --webhook https://<proxy>/ingest/evtx
 A wrong token or an inactive workflow makes the CLI exit with code 2 and a one-line
 message instead of a stack trace.
 
+<!-- CALLOUT BOX: the !!! line sets the box style; edit the quoted title and the indented text below it -->
 !!! tip "Keep the human in the loop"
     This creates an **alert**, not a response. Containment still goes through the
     lab's signed Slack approval workflow.
