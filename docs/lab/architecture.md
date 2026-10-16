@@ -1,5 +1,9 @@
 # Architecture
 
+<!-- PAGE: Architecture
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/lab/architecture/
+     Menu: The Lab > Architecture -->
+
 ## Security zones
 
 | Zone | Purpose |

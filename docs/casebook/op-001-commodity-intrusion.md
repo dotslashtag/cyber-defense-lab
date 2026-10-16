@@ -1,5 +1,9 @@
 # CASE-OP001 · Commodity Intrusion on a Workstation
 
+<!-- PAGE: CASE-OP001: Commodity intrusion
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/casebook/op-001-commodity-intrusion/
+     Menu: Casebook > CASE-OP001 -->
+
 | **Case** | CASE-OP001 (purple-team operation OP-001) |
 |---|---|
 | **Dates** | 2026-09-22 to 2026-09-23 |
@@ -21,6 +25,7 @@ false positives a week**. No data left the lab and no other host was affected.
 **Top recommendation:** tune out the noisy rule and add precise detections for
 persistence and long-running C2, which became the OP-004 work.
 
+<!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>
 ![OP-001 master timeline: seven phases with the outcome of each](../assets/img/timeline-op001.svg)
 <figcaption>Master timeline. The same marker and flow appear on the endpoint, in Wazuh,
@@ -65,6 +70,7 @@ Stages are listed in the order they were run. Outcome key:
 
 ### Evidence
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>

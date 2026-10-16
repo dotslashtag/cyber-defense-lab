@@ -1,5 +1,9 @@
 # Results
 
+<!-- PAGE: Results
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/operations/results/
+     Menu: Operations > Results -->
+
 Two questions, answered with evidence: **what did the SOC catch when attacked**, and
 **did the fixes hold up when tested cold?**
 
@@ -13,6 +17,7 @@ Each phase of each operation was scored by its best outcome.
 | [OP-002](../casebook/op-002-stealth-tradecraft.md) Quiet variant | 1 | 5 (1 buried) | 1 | **3** | Same attack done quietly: native discovery, sustained C2 and exfiltration slipped through |
 | [OP-003](../casebook/op-003-lateral-movement.md) Lateral movement | 2 | 0 | 0 | **1** | The hop between workstations was invisible, but execution on the target was blocked |
 
+<!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>
 ![OP-002 master timeline](../assets/img/timeline-op002.svg)
 <figcaption>OP-002, the control experiment: every phase swapped OP-001's loud technique
@@ -27,6 +32,7 @@ for a quiet one. Detection turned out to depend on known tools and IOCs, not on 
 | Workstation → workstation hop invisible (OP-003) | **D2** · network/RDP logon between peer workstations | Caught the OP-003 hop; of 8,864 logons in 7 days, the only match |
 | Run-key alert misnamed "script host" (OP-002) | **D3** · renamed "Run/RunOnce Key Modified", shows the real writer | Logic unchanged; original kept disabled for rollback |
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>
@@ -41,6 +47,7 @@ for a quiet one. Detection turned out to depend on known tools and IOCs, not on 
 
 </div>
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>

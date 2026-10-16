@@ -1,5 +1,9 @@
 # Casebook
 
+<!-- PAGE: Casebook (section front page)
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/casebook/
+     Menu: Casebook -->
+
 Incident reports for the lab's purple-team operations, written the way a SOC
 analyst hands off a case: bottom line first, then the verdict, timeline, scope,
 indicators, response, and what the detection gaps led to.
@@ -10,6 +14,7 @@ indicators, response, and what the detection gaps led to.
 | [CASE-OP002](op-002-stealth-tradecraft.md) | The same attack, run quietly with built-in tools | A file left the network with no alert, one IP away from a listed address | D1 clustered discovery, D3 Run-key rename; beaconing backlog |
 | [CASE-OP003](op-003-lateral-movement.md) | Valid-credential hop between two workstations | No alert on the hop, but execution on the target was blocked | D2 workstation-to-workstation logon |
 
+<!-- CALLOUT BOX: the !!! line sets the box style; edit the quoted title and the indented text below it -->
 !!! info "How these were run"
     Each operation was an **authorized, assumed-breach emulation** in an isolated
     lab using MITRE Caldera and Kali. Everything was non-destructive: no credential

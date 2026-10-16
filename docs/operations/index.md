@@ -1,5 +1,9 @@
 # Purple-Team Operations
 
+<!-- PAGE: Operations (section front page)
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/operations/
+     Menu: Operations -->
+
 Assumed-breach, post-compromise emulations run with MITRE Caldera and Kali. Each
 starts **after** initial access and exercises the later stages: execution, defense
 evasion, discovery, persistence, C2, lateral movement, collection and exfiltration.
@@ -18,6 +22,7 @@ Outcomes are scored honestly:
 
 ## ATT&CK coverage
 
+<!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>
 ![ATT&CK coverage heatmap](../assets/img/attack-coverage.svg)
 <figcaption>Outcome per technique across OP-001 to OP-004. Purple = closed by OP-004.</figcaption>
@@ -38,10 +43,12 @@ Outcomes are scored honestly:
 The 🟥 rows are the point: each was found by a scored operation, and three have
 been turned into deployed detections. The ⛏ items are a known, prioritized backlog.
 
+<!-- CALLOUT BOX: the !!! line sets the box style; edit the quoted title and the indented text below it -->
 !!! success "Did the fixes work?"
     Yes. A blind re-run caught 4 of 5 techniques cold, including both former misses.
     See [Results](results.md).
 
+<!-- CALLOUT BOX: the !!! line sets the box style; edit the quoted title and the indented text below it -->
 !!! info "Full write-ups"
     Incident reports for OP-001, OP-002 and OP-003 are in the
     [Casebook](../casebook/index.md).

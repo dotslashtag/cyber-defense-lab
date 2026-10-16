@@ -1,5 +1,9 @@
 # About
 
+<!-- PAGE: About
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/about/
+     Menu: About -->
+
 I'm **Joseph Henry Cariazo** (`dotslashtag` on GitHub). I've spent more than ten years
 running enterprise infrastructure. Now I attack it and build the detections that catch it.
 
@@ -14,6 +18,7 @@ This lab is where I practise the whole loop:
 4. Fix the gaps.
 5. Prove the fix with a cold re-run.
 
+<!-- BUTTONS: edit the text in [ ] and the link in ( ); keep { .md-button } -->
 [:fontawesome-brands-linkedin: LinkedIn](https://www.linkedin.com/in/jhrcariazo){ .md-button .md-button--primary }
 [:fontawesome-brands-github: GitHub](https://github.com/dotslashtag){ .md-button }
 

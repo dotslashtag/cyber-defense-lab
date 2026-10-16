@@ -1,9 +1,14 @@
 # Detections
 
+<!-- PAGE: Detections (section front page)
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/detections/
+     Menu: Detections -->
+
 Every detection here started as a finding from a purple-team operation, and every
 one has tests: attack events it **must fire on** and normal events it **must
 stay quiet on**. CI runs the tests on every change.
 
+<!-- BUTTONS: edit the text in [ ] and the link in ( ); keep { .md-button } -->
 [:material-github: Browse the rules on GitHub](https://github.com/dotslashtag/cyber-defense-lab/tree/main/detections){ .md-button .md-button--primary }
 
 ## From a miss to a tested detection
@@ -24,6 +29,7 @@ Each was validated **both ways** in the lab before being enabled:
 - **D2** caught the OP-003 hop, and only that: of 8,864 network/RDP logons over 7 days,
   4,028 were loopback and 4,835 went to the domain controller, leaving exactly 1.
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>
@@ -38,6 +44,7 @@ Each was validated **both ways** in the lab before being enabled:
 
 </div>
 
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
 
 <figure markdown>
@@ -99,6 +106,7 @@ controller, a loopback logon, a console logon and a failed logon must not.
 - To show the tests catch mistakes, I broke rules on purpose (dropped an
   exclusion, raised a threshold, changed a process name). Each change made a test fail.
 
+<!-- CALLOUT BOX: the !!! line sets the box style; edit the quoted title and the indented text below it -->
 !!! warning "Known issues I found in my own rules"
     Publishing the live Wazuh file meant reading it line by line, then testing each
     rule live. `510140` (ExecutionPolicy Bypass) turned out to be **silently dead** on
@@ -113,6 +121,7 @@ controller, a loopback logon, a console logon and a failed logon must not.
     low-severity brute-force early warning. Each finding is written up with its
     fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).
 
+<!-- CALLOUT BOX: the !!! line sets the box style; edit the quoted title and the indented text below it -->
 !!! note "Limits"
     D2 v2 (2026-10-13) reads its workstations from a lookup and caught two live
     WIN11-PB026 hops that v1 would have missed. Testing also found that WIN11-OPS01

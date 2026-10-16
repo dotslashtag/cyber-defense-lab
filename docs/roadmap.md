@@ -1,5 +1,9 @@
 # Roadmap
 
+<!-- PAGE: Roadmap
+     On the site: https://dotslashtag.github.io/cyber-defense-lab/roadmap/
+     Menu: Roadmap -->
+
 | Week | Deliverable | Status |
 |---|---|---|
 | 1 | Repo, CI with secret scanning, this site | ✅ |
