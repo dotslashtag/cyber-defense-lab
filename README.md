@@ -21,7 +21,7 @@ of running a full detect → investigate → respond loop against emulated attac
 - **SIEM/XDR:** Wazuh 4.14, Splunk 10.4, Sysmon (Olaf Hartong's sysmon-modular), OPNsense + Suricata
 - **SOAR & case management:** n8n with signed Slack approvals, TheHive 5, MISP 2.5
 - **Adversary emulation:** MITRE Caldera 5.3 + Kali, assumed-breach purple-team operations
-- **Environment:** Active Directory (`soc.lab`), Windows 10/11, Ubuntu, Three internal zones (management, monitored endpoints, attacker) plus the WAN uplink, under default-deny
+- **Environment:** Active Directory (`soc.lab`), Windows 10/11, Ubuntu, three internal zones (management, monitored endpoints, attacker) plus the WAN uplink, under default-deny
 
 Each operation is scored honestly (Prevented / Alerted / Logged-only / Missed) and
 mapped to MITRE ATT&CK. Missed detections are rebuilt as new detections, which are
