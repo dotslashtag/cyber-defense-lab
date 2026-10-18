@@ -12,7 +12,7 @@ enterprise and the security team that defends it.
 - **Build → Test → Capture → Document.** Every use case goes from telemetry, to a
   controlled emulation, to detection in both Wazuh and Splunk, to evidence and an
   ATT&CK mapping.
-- **Default deny.** Four zones separated by OPNsense. Any test exception is logged,
+- **Default deny.** Three internal zones and the WAN uplink, separated by OPNsense. Any test exception is logged,
   time-limited and removed afterwards.
 - **Humans approve response.** Automation enriches and recommends; a signed Slack
   approval is required before any containment action.
