@@ -109,7 +109,7 @@ into a working detection; amber = still logged-only, on the backlog.</figcaption
 
 ## How the lab is built
 
-Four zones under default-deny (management, monitored endpoints, attacker, WAN),
+Three internal zones (management, monitored endpoints, attacker) plus the WAN uplink, under default-deny,
 with alerts flowing Wazuh → Splunk and high-severity alerts into n8n for
 enrichment, a TheHive case and a signed Slack approval before any response.
 
