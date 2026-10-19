@@ -1,0 +1,226 @@
+{
+  "name": "SOAR — Enrich IP",
+  "nodes": [
+    {
+      "name": "Execute Workflow Trigger",
+      "type": "n8n-nodes-base.executeWorkflowTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        0,
+        300
+      ],
+      "parameters": {
+        "inputSource": "passthrough"
+      }
+    },
+    {
+      "name": "Validate IPv4 Observable",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        224,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const source = $input.first().json;\nconst value = String(source.ioc_value || source.value || source.src_ip || '').trim();\nconst ipv4 = /^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)$/;\nconst valid = ipv4.test(value);\nconst escaped = value.replace(/\\\\/g, '\\\\\\\\').replace(/\"/g, '\\\\\"');\nreturn [{ json: {\n  observable: { type: 'ip', value: valid ? value : null },\n  valid_input: valid,\n  validation_error: valid ? '' : 'Expected a valid IPv4 observable.',\n  splunk_query: valid ? `index=wazuh (data.win.eventdata.ipAddress=\"${escaped}\" OR data.srcip=\"${escaped}\" OR srcip=\"${escaped}\") earliest=-24h latest=now | head 20` : ''\n} }];"
+      }
+    },
+    {
+      "name": "Is Valid IPv4?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        448,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "valid",
+              "leftValue": "={{ $json.valid_input }}",
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Return Invalid Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        480
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: {\n  observable: $input.first().json.observable,\n  enrichment: {\n    status: 'invalid_input',\n    message: $input.first().json.validation_error,\n    splunk_status: 'skipped',\n    misp_status: 'skipped',\n    enrichment_degraded: false\n  }\n} }];"
+      }
+    },
+    {
+      "name": "Splunk IP Context",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        672,
+        208
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://10.10.1.4:8089/services/search/jobs/export",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "search",
+              "value": "=search {{ $json.splunk_query }}"
+            },
+            {
+              "name": "output_mode",
+              "value": "json_rows"
+            },
+            {
+              "name": "count",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "name": "<httpBasicAuth credential>"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "MISP IP Lookup",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        896,
+        208
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://10.10.1.7/attributes/restSearch",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ returnFormat: 'json', value: $('Validate IPv4 Observable').item.json.observable.value, limit: 20 }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "<httpHeaderAuth credential>"
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "name": "Build IP Enrichment Result",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1120,
+        208
+      ],
+      "parameters": {
+        "jsCode": "const input = $('Validate IPv4 Observable').item.json;\nconst splunk = $('Splunk IP Context').item.json || {};\nconst misp = $input.item.json || {};\nconst errorText = (value) => String(value?.message || value || '').slice(0, 400);\nconst splunkStatus = splunk.error ? 'error' : 'ok';\nconst mispStatus = misp.error ? 'error' : 'ok';\nconst rows = Array.isArray(splunk.rows) ? splunk.rows : [];\nconst results = Array.isArray(splunk.result) ? splunk.result : (splunk.result ? [splunk.result] : rows);\nconst attrs = misp?.response?.Attribute || misp?.Attribute || [];\nconst matches = Array.isArray(attrs) ? attrs.slice(0, 5).map(a => ({\n  type: a.type || null,\n  value: a.value || null,\n  category: a.category || null,\n  event: a.Event?.info || null,\n  threat_level: a.Event?.threat_level_id || null\n})) : [];\nconst rawMatches = Array.isArray(attrs) ? attrs.slice(0, 5) : [];\nconst isInternalControlledObservation = (a) => {\n  const eventInfo = String(a?.Event?.info || '');\n  const toIds = String(a?.to_ids ?? '').toLowerCase();\n  return /^SOC Lab - Controlled Internal Observation -/.test(eventInfo) &&\n    (toIds === '' || toIds === '0' || toIds === 'false');\n};\nconst internalObservationMatches = rawMatches.filter(isInternalControlledObservation);\nconst externalIocMatches = rawMatches.filter(a => !isInternalControlledObservation(a));\nreturn [{ json: {\n  observable: input.observable,\n  enrichment: {\n    status: splunkStatus === 'error' || mispStatus === 'error' ? 'degraded' : 'ok',\n    splunk_status: splunkStatus,\n    splunk_error: splunkStatus === 'error' ? errorText(splunk.error) : '',\n    splunk_events_found: results.length,\n    splunk_summary: results.slice(0, 10),\n    misp_status: mispStatus,\n    misp_error: mispStatus === 'error' ? errorText(misp.error) : '',\n    misp_hits_found: matches.length,\n    misp_matches: matches,\n    misp_internal_observation_matches: internalObservationMatches.length,\n    misp_has_internal_observation: internalObservationMatches.length > 0,\n    misp_external_ioc_matches: externalIocMatches.length,\n    misp_is_known_ioc: externalIocMatches.length > 0,\n    enrichment_degraded: splunkStatus === 'error' || mispStatus === 'error'\n  }\n} }];"
+      }
+    }
+  ],
+  "connections": {
+    "Execute Workflow Trigger": {
+      "main": [
+        [
+          {
+            "node": "Validate IPv4 Observable",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate IPv4 Observable": {
+      "main": [
+        [
+          {
+            "node": "Is Valid IPv4?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid IPv4?": {
+      "main": [
+        [
+          {
+            "node": "Splunk IP Context",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Return Invalid Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splunk IP Context": {
+      "main": [
+        [
+          {
+            "node": "MISP IP Lookup",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MISP IP Lookup": {
+      "main": [
+        [
+          {
+            "node": "Build IP Enrichment Result",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  }
+}

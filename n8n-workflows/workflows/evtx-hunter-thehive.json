@@ -1,0 +1,211 @@
+{
+  "name": "EVTX Hunter Findings → TheHive Alert",
+  "nodes": [
+    {
+      "name": "EVTX Hunter Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1100,
+        300
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "evtx-hunter",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Validate & Build",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -880,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\n\nif (body?.tool !== 'evtx-hunter' || !Array.isArray(body?.findings) || body.findings.length === 0) {\n  return [{ json: { _valid: false, _code: 400, _reason: 'Expected tool=\"evtx-hunter\" and a non-empty findings array' } }];\n}\n\nconst clamp = (n, lo, hi) => Math.max(lo, Math.min(hi, n));\nconst trunc = (s, n) => { s = String(s ?? ''); return s.length > n ? s.slice(0, n) + '...' : s; };\nconst fmt = e => (e && typeof e === 'object') ? Object.entries(e).map(([k, v]) => `${k}=${v}`).join(', ') : String(e ?? '');\n\nconst findings = body.findings.slice(0, 50).map(f => ({\n  rule_id: String(f?.rule_id ?? ''),\n  title: String(f?.title ?? 'Untitled finding'),\n  level: f?.level ?? '',\n  attack: Array.isArray(f?.attack) ? f.attack.map(String) : [],\n  time: String(f?.time ?? ''),\n  host: String(f?.host ?? ''),\n  event_count: Number(f?.event_count ?? 0),\n  evidence: Array.isArray(f?.evidence) ? f.evidence.slice(0, 3).map(e => trunc(fmt(e), 300)) : [],\n}));\n\nconst sevRaw = Number(body?.summary?.thehive_severity);\nconst severity = clamp(Number.isFinite(sevRaw) ? sevRaw : 2, 1, 4);\n\nconst hosts = Array.isArray(body?.summary?.hosts) ? body.summary.hosts.map(String) : [];\nconst hostsLabel = hosts.length ? hosts.join(', ') : 'unknown host(s)';\nconst n = findings.length;\nconst attackIds = [...new Set(findings.flatMap(f => f.attack))].filter(Boolean);\n\nconst rows = findings.map(f => `| ${f.time} | ${f.host} | ${f.level} | ${f.title.split('|').join('&#124;')} | ${f.attack.join(', ')} |`).join('\\n');\nconst evidenceBlocks = findings.map(f => {\n  const lines = f.evidence.map(e => '    ' + e).join('\\n');\n  return `**${f.title}** (${f.host} @ ${f.time})\\n${lines || '    (no evidence lines)'}`;\n}).join('\\n\\n');\n\nconst description = [\n  `# EVTX Hunter - ${n} finding(s) on ${hostsLabel}`,\n  `Generated: ${String(body?.generated ?? '')}  |  Tool v${String(body?.version ?? '')}`,\n  '',\n  '| Time | Host | Level | Title | ATT&CK |',\n  '|---|---|---|---|---|',\n  rows,\n  '',\n  '## Evidence (first 3 lines per finding)',\n  evidenceBlocks,\n].join('\\n');\n\nfunction hashHex(str) {\n  let h1 = 0x811c9dc5, h2 = 0xc9dc5118;\n  for (let i = 0; i < str.length; i++) {\n    const c = str.charCodeAt(i);\n    h1 = Math.imul(h1 ^ c, 0x01000193);\n    h2 = Math.imul(h2 ^ c, 0x01000193) + i;\n  }\n  const hx = x => (x >>> 0).toString(16).padStart(8, '0');\n  return hx(h1) + hx(h2);\n}\nconst key = findings.map(f => `${f.rule_id}|${f.time}|${f.host}`).sort().join('\\n');\nconst sourceRef = 'evtx-hunter-' + hashHex(key);\n\nconst alert = {\n  title: `EVTX Hunter: ${n} finding${n === 1 ? '' : 's'} on ${hostsLabel}`,\n  description,\n  type: 'evtx-hunter',\n  source: 'evtx-hunter-cli',\n  sourceRef,\n  severity,\n  tlp: 2,\n  tags: ['evtx-hunter', ...attackIds],\n  observables: hosts.map(h => ({ dataType: 'hostname', data: h, tags: ['evtx-hunter'] })),\n};\n\nreturn [{ json: { _valid: true, _code: 200, severity, sourceRef, _alert_body: JSON.stringify(alert) } }];"
+      }
+    },
+    {
+      "name": "Is Valid?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -660,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "valid",
+              "leftValue": "={{ $json._valid }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Respond Rejected",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -440,
+        160
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'rejected', reason: $json._reason }) }}",
+        "options": {
+          "responseCode": 400
+        }
+      }
+    },
+    {
+      "name": "TheHive Create Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -440,
+        420
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.10.1.6:9000/api/v1/alert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "theHiveProjectApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._alert_body }}",
+        "options": {
+          "timeout": 10000,
+          "response": {
+            "response": {
+              "fullResponse": true,
+              "neverError": true
+            }
+          }
+        }
+      },
+      "credentials": {
+        "theHiveProjectApi": {
+          "name": "<theHiveProjectApi credential>"
+        }
+      }
+    },
+    {
+      "name": "Build Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -220,
+        420
+      ],
+      "parameters": {
+        "jsCode": "const built = $('Validate & Build').item.json;\nconst res = $input.first().json;\nconst sc = res?.statusCode ?? res?.status ?? 0;\nconst data = res?.body ?? res;\nconst alertId = data?._id || data?.id;\nif (sc >= 200 && sc < 300 && alertId) {\n  return [{ json: { _code: 200, status: 'created', alertId, sourceRef: built.sourceRef } }];\n}\nconst msg = JSON.stringify(data?.message || data?.type || data || {});\nconst isDuplicate = sc === 409 || /already exists|duplicate|conflict/i.test(msg);\nif (isDuplicate) {\n  return [{ json: { _code: 200, status: 'duplicate', duplicate: true, sourceRef: built.sourceRef } }];\n}\nreturn [{ json: { _code: 502, status: 'error', reason: 'TheHive alert creation failed', http_status: sc, detail: msg.slice(0, 500) } }];"
+      }
+    },
+    {
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        0,
+        420
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {
+          "responseCode": "={{ $json._code }}"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "EVTX Hunter Webhook": {
+      "main": [
+        [
+          {
+            "node": "Validate & Build",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Validate & Build": {
+      "main": [
+        [
+          {
+            "node": "Is Valid?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Valid?": {
+      "main": [
+        [
+          {
+            "node": "TheHive Create Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Rejected",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TheHive Create Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Response": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Manila",
+    "saveManualExecutions": true
+  }
+}

@@ -1,0 +1,1100 @@
+{
+  "name": "SOAR Master — Intake & Router v2 (Improved)",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wazuh-soar-ai-v2",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "name": "Wazuh SOAR Webhook v2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -1808,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const req = $input.item.json;\nconst body = req.body || req;\nconst rule = body?.rule || {};\nconst agent = body?.agent || {};\nconst data = body?.data || {};\nconst sysmon = data?.win?.eventdata || {};\nconst groups = Array.isArray(rule?.groups) ? rule.groups : [];\nconst level = Number.parseInt(rule?.level || '0', 10) || 0;\nconst mitre = rule?.mitre || {};\nconst src_ip = data?.srcip || data?.src_ip || body?.src_ip || sysmon?.sourceIp || sysmon?.ipAddress || null;\nconst dest_ip = data?.dstip || data?.dest_ip || body?.dest_ip || sysmon?.destinationIp || null;\nconst username = sysmon?.targetUserName || sysmon?.user || data?.dstuser || data?.srcuser || null;\nconst hostname = sysmon?.computer || agent?.name || null;\nconst process_name = sysmon?.image || sysmon?.originalFileName || null;\nconst parent_process = sysmon?.parentImage || null;\nconst command_line = sysmon?.commandLine || sysmon?.scriptBlockText || null;\nconst dns_query = sysmon?.queryName || null;\nconst file_hash = sysmon?.hashes || null;\nconst event_id = body?.id || body?.event_id || null;\nconst fallbackKey = [rule?.id || 'unknown', agent?.id || agent?.name || 'unknown', src_ip || '', dest_ip || '', username || '', process_name || '', dns_query || ''].join('|');\nconst dedup_key = event_id ? `event:${event_id}` : `alert:${fallbackKey}`;\nreturn [{ json: {\n  alert_id: event_id, raw_alert: JSON.stringify(body).substring(0,3000),\n  rule_id: String(rule?.id || 'unknown'), rule_desc: rule?.description || 'No description', rule_level: level,\n  rule_groups: groups, mitre_ids: mitre?.id || [], mitre_tactics: mitre?.tactic || [],\n  agent_id: agent?.id || '000', agent_name: agent?.name || 'unknown', timestamp: body?.timestamp || new Date().toISOString(),\n  full_log: String(body?.full_log || '').substring(0,1000), src_ip, dest_ip, username, hostname, process_name, parent_process,\n  command_line: String(command_line || '').substring(0,500), dns_query, file_hash, dedup_key, received_at: Date.now()\n} }];"
+      },
+      "name": "Parse & Normalize Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1584,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $input.item.json;\nif (!alert.dedup_key) throw new Error('Missing deterministic alert deduplication key');\nreturn [{ json: { ...alert, redis_dedup_key: `soar:dedup:v2:${alert.dedup_key}` } }];"
+      },
+      "name": "Dedup Check",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "dup",
+              "leftValue": "={{ $json.is_duplicate }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "name": "Is Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -688,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'skipped', reason: 'duplicate', dedup_key: $json.dedup_key, count: $json.dedup_count }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Respond Skipped (Dedup)",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -464,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const a = $input.item.json;\nconst groups = Array.isArray(a.rule_groups) ? a.rule_groups : [];\nconst is = g => groups.includes(g);\nconst level = a.rule_level;\nconst ruleId = String(a.rule_id);\nconst safe = v => String(v ?? '').replace(/[^A-Za-z0-9_.:@-]/g,'_').substring(0,180);\nconst internal = ip => /^10\\.10\\./.test(String(ip||'')) || /^192\\.168\\./.test(String(ip||''));\nlet scenario='GENERIC', severity='medium', response_actions=[];\nif (is('dcsync') || ruleId==='510050') { scenario='DCSYNC'; severity='critical'; response_actions=['disable_account','block_ip','isolate_host']; }\nelse if (is('credential_dump') || is('mimikatz') || is('ntds')) { scenario='CRED_DUMP'; severity='critical'; response_actions=['isolate_host','disable_account']; }\nelse if (is('defense_evasion') || is('log_clearing')) { scenario='DEFENSE_EVASION'; severity='critical'; response_actions=['isolate_host']; }\nelse if (is('misp') || is('threat_intel') || is('misp_ip_match')) { scenario='IOC_MATCH'; severity='high'; response_actions=['block_ip']; }\nelse if (is('suricata')) { scenario='IDS_ALERT'; severity=level>=12?'high':'medium'; response_actions=level>=12?['block_ip']:[]; }\nelse if (is('brute_force') || is('password_spray') || is('account_lockout') || is('authentication_failed') || is('behavior_based')) { scenario=is('behavior_based')&&internal(a.src_ip)?'BRUTE_FORCE_INTERNAL':'BRUTE_FORCE'; severity=internal(a.src_ip)?'critical':'high'; response_actions=internal(a.src_ip)?['isolate_source_host','disable_account','block_ip','investigate_source_compromise']:['disable_account','block_ip']; }\nelse if (is('lateral_movement') || is('psexec') || is('wmi') || is('winrm')) { scenario='LATERAL_MOVE'; severity='high'; response_actions=['isolate_host','block_ip']; }\nelse if (is('persistence') || is('registry_run') || is('scheduled_task')) { scenario='PERSISTENCE'; severity='medium'; }\nelse if (is('windows') && (ruleId.startsWith('510') || level>=12)) { scenario='WINDOWS_HIGH'; severity=level>=14?'critical':'high'; response_actions=level>=14?['isolate_host']:[]; }\nelse if (level>=12) { scenario='GENERIC_HIGH'; severity=level>=14?'critical':'high'; }\nelse if (level>=7) { scenario='GENERIC_MEDIUM'; severity='medium'; }\nconst agent=safe(a.agent_name), src=safe(a.src_ip), user=safe(a.username);\nlet splunk_query = `index=wazuh agent.name=\"${agent}\" earliest=-30m | stats count by rule.id rule.description agent.name | sort -count`;\nif (scenario.startsWith('BRUTE_FORCE')) splunk_query=`index=wazuh (data.win.eventdata.targetUserName=\"${user}\" OR src_ip=\"${src}\") earliest=-30m | stats count by rule.id rule.description src_ip data.win.eventdata.targetUserName agent.name | sort -count`;\nelse if (scenario==='IDS_ALERT') splunk_query=`index=wazuh src_ip=\"${src}\" rule.groups=suricata earliest=-1h | stats count by rule.id rule.description dest_ip | sort -count`;\nelse if (scenario==='IOC_MATCH') { const ioc=safe(a.src_ip||a.dest_ip||a.dns_query); splunk_query=`index=wazuh (src_ip=\"${ioc}\" OR dest_ip=\"${ioc}\") earliest=-6h | stats count by rule.id rule.description agent.name | sort -count`; }\nconst hash = String(a.file_hash || '').trim().toLowerCase();\nconst domain = String(a.dns_query || '').trim().toLowerCase().replace(/\\.$/, '');\nconst ip = String(a.src_ip || a.dest_ip || '').trim();\nconst validHash = /^(?:[a-f0-9]{32}|[a-f0-9]{40}|[a-f0-9]{64})$/.test(hash);\nconst validDomain = /^(?=.{1,253}$)(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\\.)+[a-z]{2,63}$/.test(domain);\nconst validIp = /^(?:(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)$/.test(ip);\nconst ioc_type = validHash ? 'hash' : validDomain ? 'domain' : validIp ? 'ip' : null;\nconst ioc_value = ioc_type === 'hash' ? hash : ioc_type === 'domain' ? domain : ioc_type === 'ip' ? ip : null;\nreturn [{ json: { ...a, scenario, severity, response_actions, splunk_query, ioc_type, ioc_value, is_internal_source: internal(a.src_ip), needs_ai_triage: level>=7 } }];"
+      },
+      "name": "Classify Scenario",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -464,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "ai",
+              "leftValue": "={{ $json.needs_ai_triage }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "name": "Needs AI Triage?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        -240,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status:'accepted', triage:'skipped_low_priority', rule_id:$json.rule_id, level:$json.rule_level, scenario:$json.scenario }) }}",
+        "options": {
+          "responseCode": 202
+        }
+      },
+      "name": "Respond Low Priority",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -16,
+        224
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://10.10.1.4:8089/services/search/jobs/export",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "search",
+              "value": "=search {{ $json.splunk_query }}"
+            },
+            {
+              "name": "output_mode",
+              "value": "json_rows"
+            },
+            {
+              "name": "count",
+              "value": "20"
+            }
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 15000
+        }
+      },
+      "name": "Splunk Context Query",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        -16,
+        416
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpBasicAuth": {
+          "name": "<httpBasicAuth credential>"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: { _misp_skipped: true, reason: 'no_ioc' } }];"
+      },
+      "name": "MISP Lookup Skipped",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $('Classify Scenario').item.json;\nconst splunkRaw = $('Splunk Context Query').item.json;\nconst mispRaw = $input.item.json;\nconst cleanErr = e => String(e?.message || e || '').substring(0,400);\nconst splunk_status = splunkRaw?.error ? 'error' : 'ok';\nconst misp_status = mispRaw?._misp_skipped ? 'skipped' : (mispRaw?.error ? 'error' : 'ok');\nlet splunk_context=[];\nif (splunk_status==='ok') { try { const raw=typeof splunkRaw==='string'?splunkRaw:JSON.stringify(splunkRaw); for (const line of raw.split('\\n').filter(Boolean)) { try { const p=JSON.parse(line); if (p.result) splunk_context.push(p.result); } catch {} } } catch {} }\nlet attrs=[];\nif (misp_status==='ok') { try { attrs=mispRaw?.response?.Attribute || mispRaw?.Attribute || []; } catch {} }\nconst misp_hits=Array.isArray(attrs)?attrs.map(a=>({type:a.type,value:a.value,category:a.category,event:a.Event?.info||'unknown',threat_level:a.Event?.threat_level_id||'unknown'})):[];\nconst enrichment={\n  splunk_status, splunk_error:splunk_status==='error'?cleanErr(splunkRaw.error):'', splunk_events_found:splunk_context.length,\n  splunk_summary:splunk_context.slice(0,10).map(r=>({rule_id:r['rule.id'],rule_desc:r['rule.description'],count:r.count,agent:r['agent.name'],mitre:r['rule.mitre.id']})),\n  misp_status, misp_error:misp_status==='error'?cleanErr(mispRaw.error):'', misp_hits_found:misp_hits.length,\n  misp_matches:misp_hits.slice(0,5), misp_is_known_ioc:misp_hits.length>0,\n  enrichment_degraded:splunk_status==='error'||misp_status==='error'\n};\nreturn [{ json: { ...alert, enrichment } }];"
+      },
+      "name": "Merge Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        608
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.item.json;\nconst alertData={scenario:d.scenario,rule_id:d.rule_id,rule_desc:d.rule_desc,level:d.rule_level,agent:d.agent_name,src_ip:d.src_ip,dest_ip:d.dest_ip,username:d.username,process:d.process_name,parent_process:d.parent_process,command_line:d.command_line,dns_query:d.dns_query,file_hash:d.file_hash,mitre_ids:d.mitre_ids,full_log:d.full_log};\nconst systemPrompt='Return ONLY valid compact JSON with exactly: verdict, confidence, severity, summary, recommended_actions, needs_escalation, escalation_reason. Use confidence 0-100. summary and escalation_reason max 120 characters. recommended_actions max 2 items, each max 80 characters. Treat unavailable enrichment as unknown. Do not authorize actions.';\nconst body={model:'qwen3:14b',format:'json',think:false,keep_alive:'10m',messages:[{role:'system',content:systemPrompt},{role:'user',content:'ALERT:\\n'+JSON.stringify(alertData)+'\\nENRICHMENT:\\n'+JSON.stringify(d.enrichment)+'\\nAVAILABLE ACTIONS:\\n'+JSON.stringify(d.response_actions)}],stream:false,options:{temperature:0.1,num_predict:250,num_ctx:8192}};\nreturn [{json:{...d,_ollama_body:JSON.stringify(body)}}];"
+      },
+      "name": "Build Ollama Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.10.1.5:11434/api/chat",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._ollama_body }}",
+        "options": {
+          "timeout": 120000
+        }
+      },
+      "name": "Ollama AI Triage",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1104,
+        512
+      ],
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert=$('Build Ollama Request').item.json;\nconst resp=$input.item.json;\nfunction extract(raw){ if(!raw)return null; try{return JSON.parse(raw)}catch{} const m=String(raw).match(/```(?:json)?\\s*([\\s\\S]*?)```/); if(m){try{return JSON.parse(m[1].trim())}catch{}} const b=String(raw).match(/\\{[\\s\\S]*\\}/); if(b){try{return JSON.parse(b[0])}catch{}} return null; }\nconst aiError=resp?.error?String(resp.error?.message||resp.error).substring(0,400):'';\nconst content=resp?.message?.content||'';\nconst verdict=extract(content);\nconst ai=verdict||{verdict:'needs_investigation',confidence:40,severity:alert.severity,attack_type:alert.scenario,mitre_techniques:alert.mitre_ids||[],kill_chain_phase:'unknown',summary:aiError?'AI service failed':'AI parsing failed',false_positive_indicators:[],recommended_actions:['Manual review required'],ioc_to_block:[],accounts_to_disable:[],needs_escalation:true,escalation_reason:aiError||'AI parse failure'};\nai.attack_type=String(ai.attack_type||alert.scenario||'unknown'); ai.mitre_techniques=Array.isArray(ai.mitre_techniques)?ai.mitre_techniques:(alert.mitre_ids||[]); ai.kill_chain_phase=String(ai.kill_chain_phase||'unknown'); ai.false_positive_indicators=Array.isArray(ai.false_positive_indicators)?ai.false_positive_indicators:[]; ai.ioc_to_block=Array.isArray(ai.ioc_to_block)?ai.ioc_to_block:[]; ai.accounts_to_disable=Array.isArray(ai.accounts_to_disable)?ai.accounts_to_disable:[]; const confidence=Math.max(0,Math.min(100,Number(ai.confidence)||0));\nconst alertSeverity=String(alert.severity??'medium').trim().toLowerCase();\nconst fallbackSeverity=['critical','high','medium','low'].includes(alertSeverity)?alertSeverity:'medium';\nconst aiSeverity=String(ai.severity??'').trim().toLowerCase();\nconst normalizedSeverity=aiSeverity==='4'||aiSeverity==='critical'||aiSeverity==='crit'?'critical':aiSeverity==='3'||aiSeverity==='high'||aiSeverity==='severe'?'high':aiSeverity==='2'||aiSeverity==='medium'||aiSeverity==='moderate'?'medium':aiSeverity==='1'||aiSeverity==='0'||aiSeverity==='low'||aiSeverity==='informational'||aiSeverity==='info'?'low':fallbackSeverity;\nai.severity=normalizedSeverity;\nconst enrichmentOk=!alert.enrichment?.enrichment_degraded;\nconst auto_candidate=confidence>=90 && alert.enrichment?.misp_is_known_ioc===true && enrichmentOk;\nconst automation_tier=confidence>=70 && !!ai.needs_escalation?'approval_required':'manual_only';\nreturn [{json:{...alert,ai_verdict:ai,ai_raw:String(content).substring(0,500),ai_parse_success:!!verdict&&!aiError,ai_service_error:aiError,automation_tier,auto_candidate,final_severity:normalizedSeverity,verdict_label:ai.verdict,confidence,attack_summary:ai.summary,recommended_actions:Array.isArray(ai.recommended_actions)?ai.recommended_actions:[],ioc_to_block:Array.isArray(ai.ioc_to_block)?ai.ioc_to_block:[],accounts_to_disable:Array.isArray(ai.accounts_to_disable)?ai.accounts_to_disable:[],needs_escalation:!!ai.needs_escalation,escalation_reason:String(ai.escalation_reason||'')}}];"
+      },
+      "name": "Parse AI Verdict",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$input.item.json;\nconst sevMap={critical:4,high:3,medium:2,low:1};\nconst observables=[];\nif(d.src_ip)observables.push({dataType:'ip',data:d.src_ip,tags:['src_ip'],message:'Source IP'});\nif(d.dest_ip)observables.push({dataType:'ip',data:d.dest_ip,tags:['dest_ip'],message:'Destination IP'});\nif(d.username)observables.push({dataType:'other',data:d.username,tags:['username'],message:'Target account'});\nif(d.dns_query)observables.push({dataType:'domain',data:d.dns_query,tags:['dns'],message:'DNS query'});\nobservables.push({dataType:'other',data:d.agent_name,tags:['agent'],message:'Wazuh agent'});\nconst sourceRef=d.alert_id?`wazuh-${d.alert_id}`:`${d.dedup_key}-${d.timestamp}`.substring(0,240);\nconst actions=(d.recommended_actions||[]).map((a,i)=>`${i+1}. ${a}`).join('\\n')||'Manual review';\nconst hive={title:`[SOAR] ${d.scenario}: ${d.rule_desc}`,description:`## AI Triage: ${d.verdict_label} (${d.confidence}% confidence)\\n\\n${d.attack_summary}\\n\\n### Enrichment health\\n- Splunk: ${d.enrichment?.splunk_status}\\n- MISP: ${d.enrichment?.misp_status}\\n- MISP known IOC: ${d.enrichment?.misp_is_known_ioc?'YES':'No'}\\n\\n### Recommended actions\\n${actions}\\n\\n*AI: gemma4:e4b | Tier: ${d.automation_tier} | Auto-candidate: ${d.auto_candidate}*`,type:'external',source:'soar-ai-triage-v2',sourceRef,severity:sevMap[d.final_severity]||2,tlp:2,tags:['soar','ai-triage-v2',d.scenario,d.verdict_label],observables};\nreturn [{json:{...d,_hive_body:JSON.stringify(hive)}}];"
+      },
+      "name": "Build TheHive Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.10.1.6:9000/api/v1/alert",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._hive_body }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "TheHive Create Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        1776,
+        512
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "<httpHeaderAuth credential>"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d=$('Parse AI Verdict').item.json;\nconst hive=$input.item.json;\nconst hiveId=hive?._id||hive?.id||null;\nconst hiveUrl=hiveId?`http://10.10.1.6:9000/index.html#!/alert/${hiveId}/details`:null;\nconst sev=d.final_severity||'medium';\nconst isCritical=sev==='critical'||sev==='high';\nconst health=`Splunk: ${d.enrichment?.splunk_status} | MISP: ${d.enrichment?.misp_status}`;\nconst text=`${sev.toUpperCase()} ${d.scenario}: ${d.rule_desc} (${d.confidence}% confidence) — ${health}`;\nconst blocks=[{type:'header',text:{type:'plain_text',text:`SOAR ${sev.toUpperCase()}: ${d.scenario}`,emoji:true}},{type:'section',text:{type:'mrkdwn',text:`*${d.rule_desc}*\\n${d.attack_summary}`}},{type:'section',fields:[{type:'mrkdwn',text:`*Agent:* ${d.agent_name}`},{type:'mrkdwn',text:`*Source IP:* ${d.src_ip||'N/A'}`},{type:'mrkdwn',text:`*Confidence:* ${d.confidence}%`},{type:'mrkdwn',text:`*Enrichment:* ${health}`}]}];\nif(hiveUrl)blocks.push({type:'actions',elements:[{type:'button',text:{type:'plain_text',text:'View in TheHive'},url:hiveUrl,action_id:'view_thehive'}]});\nconst alertsPayload=JSON.stringify({channel:'C0SLACKCHANNEL',text,blocks});\nconst criticalPayload=isCritical?JSON.stringify({channel:'C0SLACKCHANNEL',text,blocks}):null;\nreturn [{json:{...d,_hive_id:hiveId,_slack_alerts:alertsPayload,_slack_critical:criticalPayload,_is_critical:isCritical}}];"
+      },
+      "name": "Build Slack Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $('Build Slack Message').item.json._slack_alerts }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Slack Notify Alerts",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2224,
+        512
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "crit",
+              "leftValue": "={{ $('Build Slack Message').item.json._is_critical }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "name": "Is Critical or High?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        2448,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $('Build Slack Message').item.json._slack_critical }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Slack Notify Critical",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        2672,
+        368
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert=$('Parse AI Verdict').item.json;\nconst hive=$('TheHive Create Alert').item.json;\nconst slackAlerts=$('Slack Notify Alerts').item.json;\nconst critical=$('Build Slack Message').item.json._is_critical;\nconst slackCritical=critical?$input.item.json:null;\nconst hiveOk=!!(hive?._id||hive?.id);\nconst slackAlertsOk=slackAlerts?.ok===true;\nconst slackCriticalOk=!critical || slackCritical?.ok===true;\nreturn [{json:{status:'completed',rule_id:alert.rule_id,rule_desc:alert.rule_desc,agent:alert.agent_name,scenario:alert.scenario,timestamp:alert.timestamp,verdict:alert.verdict_label,confidence:alert.confidence,severity:alert.final_severity,attack_summary:alert.attack_summary,automation_tier:alert.automation_tier,auto_candidate:alert.auto_candidate,enrichment:alert.enrichment,recommended_actions:alert.recommended_actions,needs_escalation:alert.needs_escalation,thehive_alert_created:hiveOk,thehive_alert_id:hive?._id||hive?.id||null,slack_alerts_notified:slackAlertsOk,slack_critical_required:critical,slack_critical_notified:slackCriticalOk,pipeline_degraded:!!alert.enrichment?.enrichment_degraded||!hiveOk||!slackAlertsOk||!slackCriticalOk,ai_parse_success:alert.ai_parse_success,pipeline_completed:new Date().toISOString()}}];"
+      },
+      "name": "Build Final Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "approval",
+              "leftValue": "={{ $json.automation_tier }}",
+              "operator": {
+                "operation": "equals",
+                "type": "string"
+              },
+              "rightValue": "approval_required"
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      },
+      "name": "Needs Approval?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        3120,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $('Parse AI Verdict').item.json;\nconst hive = $('TheHive Create Alert').item.json;\nconst hiveId = hive?._id || hive?.id || 'unknown';\n\nfunction isIPv4(value) {\n  if (typeof value !== 'string') return false;\n  const parts = value.split('.');\n  return parts.length === 4 && parts.every((part) => /^\\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);\n}\n\nconst allowBlockIp = d.enrichment?.misp_is_known_ioc === true\n  && d.enrichment?.enrichment_degraded !== true\n  && isIPv4(d.src_ip);\n\nconst action_policy = {\n  allow_block_ip: allowBlockIp,\n  allow_disable_account: false,\n  allow_isolate_host: false,\n};\n\nconst ctx = {\n  alert_id: hiveId,\n  rule_id: d.rule_id,\n  scenario: d.scenario,\n  confidence: d.confidence,\n  tier: d.automation_tier,\n  auto_candidate: d.auto_candidate,\n  src_ip: d.src_ip || '',\n  dest_ip: d.dest_ip || '',\n  username: d.username || '',\n  agent_name: d.agent_name || '',\n  agent_id: d.agent_id || '',\n  ioc_to_block: allowBlockIp ? d.src_ip : '',\n  accounts_to_disable: '',\n  action_policy,\n  recommended_actions: (d.recommended_actions || []).join('|'),\n};\n\nconst value = JSON.stringify(ctx).substring(0, 1900);\nconst policyText = allowBlockIp\n  ? `*Allowed containment:* Firewall block for MISP-confirmed IOC \\`${d.src_ip}\\`.`\n  : '*Allowed containment:* None. Manual investigation and response are required.';\n\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: `ACTION REQUIRED: ${d.scenario}`, emoji: true } },\n  { type: 'section', text: { type: 'mrkdwn', text: `*${d.rule_desc}*\\n${d.attack_summary}\\n\\n*Confidence:* ${d.confidence}% | *Severity:* ${d.final_severity}\\n${policyText}` } },\n  { type: 'actions', block_id: 'soar_approval_actions_v2', elements: [\n    { type: 'button', style: 'primary', text: { type: 'plain_text', text: 'Approve Allowed Actions' }, action_id: 'approve_all', value },\n    { type: 'button', style: 'danger', text: { type: 'plain_text', text: 'Reject' }, action_id: 'reject', value },\n    { type: 'button', text: { type: 'plain_text', text: 'Investigate First' }, action_id: 'investigate', value },\n  ] },\n];\n\nreturn [{ json: { _approval_payload: JSON.stringify({ channel: 'C0SLACKCHANNEL', text: `Approval required: ${d.scenario} on ${d.agent_name}`, blocks }) } }];"
+      },
+      "name": "Build Approval Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3344,
+        368
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._approval_payload }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "name": "Post Approval Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        3568,
+        368
+      ],
+      "alwaysOutputData": true,
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      },
+      "onError": "continueRegularOutput"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($('Build Final Summary').item.json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        3792,
+        512
+      ]
+    },
+    {
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ $json.redis_dedup_key }}",
+        "expire": true,
+        "ttl": 300
+      },
+      "name": "Redis Increment Dedup Counter",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -1136,
+        128
+      ],
+      "credentials": {
+        "redis": {
+          "name": "<redis credential>"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $('Dedup Check').item.json;\nconst counter = Number(Object.values($input.first().json)[0]);\nif (!Number.isInteger(counter) || counter < 1) throw new Error('Redis did not return a valid deduplication counter');\nreturn [{ json: { ...alert, dedup_count: counter, is_duplicate: counter > 1 } }];"
+      },
+      "name": "Mark Dedup Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -912,
+        128
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Classify Scenario').item.json.ioc_type }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "ip"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "ip"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Classify Scenario').item.json.ioc_type }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "domain"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "domain"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $('Classify Scenario').item.json.ioc_type }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "hash"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "hash"
+            }
+          ]
+        },
+        "options": {
+          "fallbackOutput": "extra",
+          "renameFallbackOutput": "no_observable"
+        }
+      },
+      "name": "Route Observable Enrichment",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.4,
+      "position": [
+        208,
+        384
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "<workflow: SOAR — Enrich IP>",
+          "cachedResultName": "SOAR — Enrich IP"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "name": "Run SOAR Enrich IP",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        32
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "<workflow: SOAR — Enrich Domain>",
+          "cachedResultName": "SOAR — Enrich Domain"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "name": "Run SOAR Enrich Domain",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "<workflow: SOAR — Enrich Hash>",
+          "cachedResultName": "SOAR — Enrich Hash"
+        },
+        "options": {
+          "waitForSubWorkflow": true
+        }
+      },
+      "name": "Run SOAR Enrich Hash",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.3,
+      "position": [
+        432,
+        704
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const alert = $('Classify Scenario').item.json;\nconst genericRaw = $('Splunk Context Query').item.json || {};\nconst reusable = $input.item.json || {};\nconst genericRows = Array.isArray(genericRaw.rows) ? genericRaw.rows : (genericRaw.result ? (Array.isArray(genericRaw.result) ? genericRaw.result : [genericRaw.result]) : []);\nconst genericStatus = genericRaw.error ? 'error' : 'ok';\nconst genericError = genericStatus === 'error' ? String(genericRaw.error?.message || genericRaw.error || '').slice(0, 400) : '';\nconst enrichment = { ...(reusable.enrichment || {}), generic_splunk_status: genericStatus, generic_splunk_error: genericError, generic_splunk_events_found: genericRows.length, generic_splunk_summary: genericRows.slice(0, 10) };\nenrichment.enrichment_degraded = Boolean(enrichment.enrichment_degraded || genericStatus === 'error');\nreturn [{ json: { ...alert, observable: reusable.observable || null, enrichment } }];"
+      },
+      "name": "Merge Reusable Enrichment",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        656,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "return [{ json: $('Classify Scenario').item.json }];"
+      },
+      "name": "Prepare Observable Input",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -96,
+        320
+      ]
+    }
+  ],
+  "connections": {
+    "Parse & Normalize Alert": {
+      "main": [
+        [
+          {
+            "node": "Dedup Check",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Respond Skipped (Dedup)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Classify Scenario",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Classify Scenario": {
+      "main": [
+        [
+          {
+            "node": "Needs AI Triage?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs AI Triage?": {
+      "main": [
+        [
+          {
+            "node": "Splunk Context Query",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond Low Priority",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "MISP Lookup Skipped": {
+      "main": [
+        [
+          {
+            "node": "Merge Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Build Ollama Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Ollama Request": {
+      "main": [
+        [
+          {
+            "node": "Ollama AI Triage",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Ollama AI Triage": {
+      "main": [
+        [
+          {
+            "node": "Parse AI Verdict",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI Verdict": {
+      "main": [
+        [
+          {
+            "node": "Build TheHive Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TheHive Alert": {
+      "main": [
+        [
+          {
+            "node": "TheHive Create Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TheHive Create Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Slack Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Slack Message": {
+      "main": [
+        [
+          {
+            "node": "Slack Notify Alerts",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify Alerts": {
+      "main": [
+        [
+          {
+            "node": "Is Critical or High?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Critical or High?": {
+      "main": [
+        [
+          {
+            "node": "Slack Notify Critical",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Slack Notify Critical": {
+      "main": [
+        [
+          {
+            "node": "Build Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Summary": {
+      "main": [
+        [
+          {
+            "node": "Needs Approval?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Needs Approval?": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Request",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Request": {
+      "main": [
+        [
+          {
+            "node": "Post Approval Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Approval Request": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wazuh SOAR Webhook v2": {
+      "main": [
+        [
+          {
+            "node": "Parse & Normalize Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Dedup Check": {
+      "main": [
+        [
+          {
+            "node": "Redis Increment Dedup Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Increment Dedup Counter": {
+      "main": [
+        [
+          {
+            "node": "Mark Dedup Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Dedup Outcome": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Route Observable Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Run SOAR Enrich IP",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run SOAR Enrich Domain",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Run SOAR Enrich Hash",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "MISP Lookup Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run SOAR Enrich IP": {
+      "main": [
+        [
+          {
+            "node": "Merge Reusable Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run SOAR Enrich Domain": {
+      "main": [
+        [
+          {
+            "node": "Merge Reusable Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Run SOAR Enrich Hash": {
+      "main": [
+        [
+          {
+            "node": "Merge Reusable Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Merge Reusable Enrichment": {
+      "main": [
+        [
+          {
+            "node": "Build Ollama Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Splunk Context Query": {
+      "main": [
+        [
+          {
+            "node": "Prepare Observable Input",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Observable Input": {
+      "main": [
+        [
+          {
+            "node": "Route Observable Enrichment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Asia/Manila",
+    "saveManualExecutions": true
+  }
+}

@@ -1,0 +1,1103 @@
+{
+  "name": "SOAR Response Handler — Slack Approval",
+  "nodes": [
+    {
+      "name": "Slack Interaction Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        208,
+        1312
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "slack-soar-action",
+        "responseMode": "responseNode",
+        "options": {
+          "rawBody": true
+        }
+      }
+    },
+    {
+      "name": "Acknowledge Slack Request",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        432,
+        1216
+      ],
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ $json.body?.challenge || '' }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Parse Slack Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        432,
+        1408
+      ],
+      "parameters": {
+        "jsCode": "// Verify Slack's signed request before parsing or routing any action.\nconst crypto = require('crypto');\nconst item = $input.item;\nconst input = item.json;\nconst headers = input.headers || {};\nconst header = (name) => {\n  const key = Object.keys(headers).find((candidate) => candidate.toLowerCase() === name);\n  return key ? String(headers[key]) : '';\n};\n\nconst timestamp = header('x-slack-request-timestamp');\nconst signature = header('x-slack-signature');\nconst signingSecret = $env.SOAR_SLACK_SIGNING_SECRET;\nconst rawCandidate = input.rawBody ?? input.body?.rawBody ?? input.body;\nconst rawBinary = item.binary?.data || Object.values(item.binary || {})[0];\nlet rawBody = '';\n\nif (rawBinary?.data) {\n  rawBody = Buffer.from(rawBinary.data, 'base64').toString('utf8');\n} else if (Buffer.isBuffer(rawCandidate)) {\n  rawBody = rawCandidate.toString('utf8');\n} else if (typeof rawCandidate === 'string') {\n  rawBody = rawCandidate;\n} else if (rawCandidate?.type === 'Buffer' && Array.isArray(rawCandidate.data)) {\n  rawBody = Buffer.from(rawCandidate.data).toString('utf8');\n}\n\nconst requestTimestamp = Number.parseInt(timestamp, 10);\nconst requestAgeSeconds = Math.abs(Math.floor(Date.now() / 1000) - requestTimestamp);\nif (!signingSecret || !rawBody || !signature || !Number.isFinite(requestTimestamp) || requestAgeSeconds > 300) {\n  throw new Error('Slack request authentication failed');\n}\n\nconst expectedSignature = `v0=${crypto\n  .createHmac('sha256', signingSecret)\n  .update(`v0:${timestamp}:${rawBody}`)\n  .digest('hex')}`;\n\nconst expected = Buffer.from(expectedSignature, 'utf8');\nconst received = Buffer.from(signature, 'utf8');\nif (expected.length !== received.length || !crypto.timingSafeEqual(expected, received)) {\n  throw new Error('Slack request authentication failed');\n}\n\n// Slack sends interaction payloads as x-www-form-urlencoded with a payload field.\nconst body = input.body || {};\nconst payloadMatch = rawBody.match(/(?:^|&)payload=([^&]*)/);\nlet payloadStr = body.payload || (payloadMatch ? decodeURIComponent(payloadMatch[1].replace(/\\+/g, ' ')) : '');\n\nlet slack;\ntry {\n  slack = typeof payloadStr === 'string' ? JSON.parse(payloadStr) : payloadStr;\n} catch {\n  throw new Error('Slack interaction payload could not be parsed');\n}\n\nconst user = slack?.user || {};\nconst action = (slack?.actions && slack.actions[0]) || {};\nconst message = slack?.message || {};\nconst channel = slack?.channel || {};\n\n// The signed button value contains context emitted by the V2 master workflow.\nlet ctx = {};\ntry { ctx = JSON.parse(action.value || '{}'); } catch {}\n\nconst AUTHORIZED_USERS = [\n  'U0SLACKUSER',  // Primary SOAR approval operator\n];\n\nconst user_id = user.id || 'unknown';\nconst user_name = user.username || user.name || 'unknown';\nconst action_id = action.action_id || 'unknown';\nconst is_authorized = AUTHORIZED_USERS.includes(user_id);\nconst is_supported_decision = ['approve_all', 'approve_exception', 'reject', 'investigate'].includes(action_id);\n\nreturn [{ json: {\n  slack_request_verified: true,\n  action_id,\n  user_id,\n  user_name,\n  is_authorized,\n  is_supported_decision,\n  response_url: slack?.response_url || '',\n  channel_id: channel.id || '',\n  message_ts: message.ts || '',\n  alert_id: ctx.alert_id || 'unknown',\n  rule_id: ctx.rule_id || 'unknown',\n  scenario: ctx.scenario || 'GENERIC',\n  confidence: ctx.confidence || 0,\n  tier: ctx.tier || 'manual_only',\n  src_ip: ctx.src_ip || '',\n  dest_ip: ctx.dest_ip || '',\n  username: ctx.username || '',\n  agent_name: ctx.agent_name || '',\n  agent_id: ctx.agent_id || '',\n  ioc_to_block: (ctx.ioc_to_block || '').split(',').filter((value) => value),\n  accounts_to_disable: (ctx.accounts_to_disable || '').split(',').filter((value) => value),\n  recommended_actions: (ctx.recommended_actions || '').split('|').filter((value) => value),\n  action_policy: ctx.action_policy && typeof ctx.action_policy === 'object' ? ctx.action_policy : {},\n  action_timestamp: new Date().toISOString()\n}}];"
+      }
+    },
+    {
+      "name": "Is Authorized?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        656,
+        1408
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "auth",
+              "leftValue": "={{ $json.is_authorized }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Post Unauthorized",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        880,
+        1504
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({channel: $json.channel_id, thread_ts: $json.message_ts, text: ':no_entry: Unauthorized: <@' + $json.user_id + '> is not permitted to approve SOAR actions.'}) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      }
+    },
+    {
+      "name": "Route By Action",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        1776,
+        1200
+      ],
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action_id }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "approve_all"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "approve"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action_id }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "reject"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "reject"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action_id }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "investigate"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "investigate"
+            },
+            {
+              "conditions": {
+                "combinator": "and",
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.action_id }}",
+                    "operator": {
+                      "operation": "equals",
+                      "type": "string"
+                    },
+                    "rightValue": "approve_exception"
+                  }
+                ],
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 1
+                }
+              },
+              "renameOutput": true,
+              "outputKey": "exception"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Prepare Actions",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2000,
+        576
+      ],
+      "parameters": {
+        "jsCode": "// Enforce only deterministic, Slack-signed response policy from the approval context.\nconst d = $input.item.json;\nconst policy = d.action_policy || {};\nconst ELIGIBLE_GROUP_DN = 'CN=SOC-SOAR-Disable-Eligible,CN=Users,DC=soc,DC=lab';\n\nfunction isIPv4(value) {\n  if (typeof value !== 'string') return false;\n  const parts = value.split('.');\n  return parts.length === 4 && parts.every((part) => /^\\d{1,3}$/.test(part) && Number(part) >= 0 && Number(part) <= 255);\n}\nfunction isEligibleAccountName(value) {\n  if (typeof value !== 'string' || !/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(value)) return false;\n  const name = value.toLowerCase();\n  return !['administrator', 'admin', 'guest', 'krbtgt', 'wazuh', 'splunk', 'thehive', 'n8n', 'root'].includes(name) && !name.startsWith('svc_');\n}\n\nconst disableMode = String(policy.account_disable_mode || '');\nconst normalEligibleMode = disableMode === 'eligible_group';\nconst explicitExceptionMode = disableMode === 'human_approved_exception'\n  && policy.allow_human_approved_exception === true\n  && policy.human_approval_required === true\n  && d.action_id === 'approve_exception';\nconst blockCandidates = new Set((d.ioc_to_block || []).filter(isIPv4));\nconst do_block_ip = policy.allow_block_ip === true && isIPv4(d.src_ip) && blockCandidates.has(d.src_ip);\nconst do_disable_account = policy.allow_disable_account === true\n  && isEligibleAccountName(d.username)\n  && (normalEligibleMode || explicitExceptionMode);\nconst ldap_filter = do_disable_account ? '(&(objectClass=user)(sAMAccountName=' + d.username + '))' : '';\nconst do_isolate_host = false;\n\nreturn [{json:{\n  ...d,\n  do_block_ip,\n  do_disable_account,\n  do_isolate_host,\n  eligible_group_dn: ELIGIBLE_GROUP_DN,\n  account_disable_mode: disableMode,\n  explicit_exception_approved: explicitExceptionMode,\n  ldap_filter\n}}];"
+      }
+    },
+    {
+      "name": "Should Block IP?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        208
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "do-block",
+              "leftValue": "={{ $json.do_block_ip }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Should Disable Account?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2224,
+        592
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "do-disable",
+              "leftValue": "={{ $json.do_disable_account }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Should Isolate Host?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        2448,
+        976
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "do-isolate",
+              "leftValue": "={{ $json.do_isolate_host }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "OPNsense Block IP",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2448,
+        112
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://10.10.1.1/api/firewall/alias_util/add/SOC_BRUTE_BLOCK",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify({ address: $json.src_ip }) }}",
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "name": "<httpBasicAuth credential>"
+        }
+      }
+    },
+    {
+      "name": "Skip Block IP",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        304
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { ...$input.item.json, block_ip_result: 'skipped' }}];"
+      }
+    },
+    {
+      "name": "LDAP Search User",
+      "type": "n8n-nodes-base.ldap",
+      "typeVersion": 1,
+      "position": [
+        2448,
+        496
+      ],
+      "parameters": {
+        "baseDN": "DC=soc,DC=lab",
+        "searchText": "={{ $json.ldap_filter }}",
+        "options": {
+          "attributes": [
+            "sAMAccountName",
+            "userAccountControl",
+            "distinguishedName",
+            "memberOf",
+            "adminCount",
+            "servicePrincipalName"
+          ],
+          "scope": "sub"
+        },
+        "operation": "search",
+        "searchFor": "custom",
+        "customFilter": "={{ $json.ldap_filter }}",
+        "returnAll": false,
+        "limit": 2
+      },
+      "credentials": {
+        "ldap": {
+          "name": "<ldap credential>"
+        }
+      }
+    },
+    {
+      "name": "LDAP Disable Account",
+      "type": "n8n-nodes-base.ldap",
+      "typeVersion": 1,
+      "position": [
+        2672,
+        496
+      ],
+      "parameters": {
+        "operation": "update",
+        "dn": "={{ $json.ldap_dn }}",
+        "attributes": {
+          "replace": [
+            {
+              "id": "userAccountControl",
+              "value": "={{ String($json.ldap_new_uac) }}"
+            }
+          ]
+        }
+      },
+      "credentials": {
+        "ldap": {
+          "name": "<ldap credential>"
+        }
+      }
+    },
+    {
+      "name": "Skip Disable Account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        688
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { ...$input.item.json, disable_account_result: 'skipped' }}];"
+      }
+    },
+    {
+      "name": "Wazuh Isolate Host",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        2672,
+        880
+      ],
+      "parameters": {
+        "method": "PUT",
+        "url": "https://10.10.1.3:55000/active-response",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendQuery": true,
+        "queryParameters": {
+          "parameters": [
+            {
+              "name": "agents_list",
+              "value": "={{ $json.agent_id }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {}
+          ]
+        },
+        "options": {
+          "allowUnauthorizedCerts": true,
+          "timeout": 15000
+        }
+      },
+      "credentials": {
+        "httpBasicAuth": {
+          "name": "<httpBasicAuth credential>"
+        }
+      }
+    },
+    {
+      "name": "Skip Isolate Host",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        1072
+      ],
+      "parameters": {
+        "jsCode": "return [{ json: { ...$input.item.json, isolate_host_result: 'skipped' }}];"
+      }
+    },
+    {
+      "name": "Aggregate Results",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        688
+      ],
+      "parameters": {
+        "jsCode": "// Summarize the deterministic, sequential response branches without reading skipped nodes.\nconst prep = $('Prepare Actions').item.json;\n\nfunction executedNodeJson(name) {\n  const node = $(name);\n  return node.isExecuted ? node.item.json : null;\n}\n\nconst blockResult = executedNodeJson('OPNsense Block IP') || executedNodeJson('Skip Block IP') || {};\nconst ldapResult = executedNodeJson('LDAP Disable Account') || executedNodeJson('Skip Disable Account') || {};\nconst isolateResult = executedNodeJson('Wazuh Isolate Host') || executedNodeJson('Skip Isolate Host') || {};\n\nconst results = {\n  block_ip: prep.do_block_ip ? (blockResult.error ? 'failed' : 'success') : 'skipped',\n  disable_account: prep.do_disable_account ? (ldapResult.error ? 'failed' : 'success') : 'skipped',\n  isolate_host: prep.do_isolate_host ? (isolateResult.error ? 'failed' : 'success') : 'skipped',\n};\n\nreturn [{ json: { ...prep, results, executed_at: new Date().toISOString() } }];"
+      }
+    },
+    {
+      "name": "Build Slack Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        688
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.item.json;\nconst r = d.results || {};\n\nfunction statusEmoji(s) {\n  if (s === 'success') return '\\u2705';\n  if (s === 'failed') return '\\u274c';\n  return '\\u2796'; // skipped\n}\n\nconst hiveUrl = 'http://10.10.1.6:9000/index.html#!/alert/' + d.alert_id + '/details';\n\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: '\\u2705 APPROVED: ' + d.scenario, emoji: true } },\n  { type: 'section', text: { type: 'mrkdwn', text: '*Approved by:* <@' + d.user_id + '> at ' + d.executed_at } },\n  { type: 'section', fields: [\n    { type: 'mrkdwn', text: '*Block IP (' + (d.src_ip || 'N/A') + '):* ' + statusEmoji(r.block_ip) + ' ' + r.block_ip },\n    { type: 'mrkdwn', text: '*Disable Account (' + (d.username || 'N/A') + '):* ' + statusEmoji(r.disable_account) + ' ' + r.disable_account },\n    { type: 'mrkdwn', text: '*Isolate Host (' + (d.agent_name || 'N/A') + '):* ' + statusEmoji(r.isolate_host) + ' ' + r.isolate_host }\n  ]},\n  { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: '\\ud83d\\udccb View in TheHive', emoji: true }, url: hiveUrl, action_id: 'view_thehive' }] },\n  { type: 'context', elements: [{ type: 'mrkdwn', text: 'Alert ' + d.alert_id + ' | Rule ' + d.rule_id + ' | Tier: ' + d.tier } ] }\n];\n\nconst payload = JSON.stringify({\n  channel: d.channel_id,\n  ts: d.message_ts,\n  text: '\\u2705 Approved by <@' + d.user_id + '>: ' + d.scenario,\n  blocks: blocks\n});\n\nreturn [{ json: { ...d, _slack_update: payload } }];"
+      }
+    },
+    {
+      "name": "Build Reject Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        1216
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.item.json;\nconst hiveUrl = 'http://10.10.1.6:9000/index.html#!/alert/' + d.alert_id + '/details';\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: '\\u274c REJECTED: ' + d.scenario, emoji: true } },\n  { type: 'section', text: { type: 'mrkdwn', text: '*Rejected by:* <@' + d.user_id + '> at ' + d.action_timestamp } },\n  { type: 'section', text: { type: 'mrkdwn', text: 'No automated actions were taken. Alert remains open in TheHive for manual investigation.' } },\n  { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: '\\ud83d\\udccb View in TheHive', emoji: true }, url: hiveUrl, action_id: 'view_thehive' }] },\n  { type: 'context', elements: [{ type: 'mrkdwn', text: 'Alert ' + d.alert_id + ' | Rule ' + d.rule_id } ] }\n];\nreturn [{ json: { ...d, _slack_update: JSON.stringify({ channel: d.channel_id, ts: d.message_ts, text: '\\u274c Rejected by <@' + d.user_id + '>: ' + d.scenario, blocks: blocks }) } }];"
+      }
+    },
+    {
+      "name": "Build Investigate Update",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        3120,
+        1408
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.item.json;\nconst hiveUrl = 'http://10.10.1.6:9000/index.html#!/alert/' + d.alert_id + '/details';\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: '\\ud83d\\udd0d INVESTIGATING: ' + d.scenario, emoji: true } },\n  { type: 'section', text: { type: 'mrkdwn', text: '*Assigned to:* <@' + d.user_id + '> at ' + d.action_timestamp } },\n  { type: 'section', text: { type: 'mrkdwn', text: 'Deferred for manual investigation. No automated actions taken yet. Analyst will follow up in TheHive.' } },\n  { type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: '\\ud83d\\udccb Open in TheHive', emoji: true }, url: hiveUrl, action_id: 'view_thehive' }] },\n  { type: 'context', elements: [{ type: 'mrkdwn', text: 'Alert ' + d.alert_id + ' | Rule ' + d.rule_id } ] }\n];\nreturn [{ json: { ...d, _slack_update: JSON.stringify({ channel: d.channel_id, ts: d.message_ts, text: '\\ud83d\\udd0d Under investigation by <@' + d.user_id + '>: ' + d.scenario, blocks: blocks }) } }];"
+      }
+    },
+    {
+      "name": "Update Slack Message",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        3344,
+        864
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.update",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._slack_update }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      }
+    },
+    {
+      "name": "TheHive Add Action Log",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "continueOnFail": true,
+      "position": [
+        3344,
+        1360
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "=http://10.10.1.6:9000/api/v1/alert/{{ $json.alert_id }}/comment",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpHeaderAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ message: '## SOAR Action Log\\n\\n**Approved by:** ' + $json.user_name + ' (' + $json.user_id + ')\\n**Time:** ' + $json.executed_at + '\\n\\n### Results\\n- Block IP (' + ($json.src_ip || 'N/A') + '): ' + $json.results.block_ip + '\\n- Disable Account (' + ($json.username || 'N/A') + '): ' + $json.results.disable_account + '\\n- Isolate Host (' + ($json.agent_name || 'N/A') + '): ' + $json.results.isolate_host }) }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "httpHeaderAuth": {
+          "name": "<httpHeaderAuth credential>"
+        }
+      }
+    },
+    {
+      "name": "Build Approval Lock Key",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        880,
+        1216
+      ],
+      "parameters": {
+        "jsCode": "const event = $input.item.json;\nconst normalize = (value) => String(value || '').replace(/[^A-Za-z0-9_.:-]/g, '_');\nconst alertId = normalize(event.alert_id);\nconst messageTs = normalize(event.message_ts);\nif (!alertId || alertId === 'unknown' || !messageTs) throw new Error('Missing approval context for one-time lock');\nreturn [{ json: { ...event, approval_lock_key: `soar:approval:${alertId}:${messageTs}` } }];"
+      }
+    },
+    {
+      "name": "Redis Increment Approval Lock",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        1104,
+        1216
+      ],
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ $json.approval_lock_key }}",
+        "expire": true,
+        "ttl": 86400
+      },
+      "credentials": {
+        "redis": {
+          "name": "<redis credential>"
+        }
+      }
+    },
+    {
+      "name": "Mark Approval Lock Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1328,
+        1216
+      ],
+      "parameters": {
+        "jsCode": "const event = $('Build Approval Lock Key').item.json;\nconst counter = Number(Object.values($input.first().json)[0]);\nif (!Number.isInteger(counter) || counter < 1) throw new Error('Redis did not return a valid approval lock counter');\nreturn [{ json: { ...event, approval_lock_count: counter, is_first_approval: counter === 1 } }];"
+      }
+    },
+    {
+      "name": "Is First Approval?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1552,
+        1216
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "first-approval",
+              "leftValue": "={{ $json.is_first_approval }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Is Supported Decision?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.3,
+      "position": [
+        656,
+        1320
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "supported-decision",
+              "leftValue": "={{ $json.is_supported_decision }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "version": 1,
+            "leftValue": "",
+            "caseSensitive": true,
+            "typeValidation": "strict"
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Verify Eligible AD Account",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        496
+      ],
+      "parameters": {
+        "jsCode": "const candidates = $input.all();\nif (candidates.length !== 1) throw new Error('AD account lookup did not return exactly one entry');\n\nconst entry = candidates[0].json;\nconst prep = $('Prepare Actions').item.json;\nconst ldapDn = String(entry.dn || entry.distinguishedName || '').trim();\nconst returnedAccount = String(entry.sAMAccountName || entry.samaccountname || '').trim();\nconst rawUac = Array.isArray(entry.userAccountControl) ? entry.userAccountControl[0] : entry.userAccountControl;\nconst currentUac = Number(rawUac);\nconst toArray = (value) => Array.isArray(value) ? value : (value === undefined || value === null || value === '' ? [] : [value]);\nconst directGroups = toArray(entry.memberOf).map((value) => String(value).toLowerCase());\nconst servicePrincipalNames = toArray(entry.servicePrincipalName).filter((value) => String(value).trim() !== '');\nconst adminCount = Number(Array.isArray(entry.adminCount) ? entry.adminCount[0] : entry.adminCount || 0);\nconst protectedGroups = new Set([\n  'cn=domain admins,cn=users,dc=soc,dc=lab',\n  'cn=enterprise admins,cn=users,dc=soc,dc=lab',\n  'cn=schema admins,cn=users,dc=soc,dc=lab',\n  'cn=administrators,cn=builtin,dc=soc,dc=lab',\n  'cn=account operators,cn=builtin,dc=soc,dc=lab',\n  'cn=backup operators,cn=builtin,dc=soc,dc=lab',\n  'cn=server operators,cn=builtin,dc=soc,dc=lab',\n  'cn=print operators,cn=builtin,dc=soc,dc=lab'\n]);\n\nif (!ldapDn || !returnedAccount || returnedAccount.toLowerCase() !== String(prep.username).toLowerCase()) {\n  throw new Error('LDAP account identity did not exactly match the approved response context');\n}\nif (!Number.isInteger(currentUac) || currentUac < 0) throw new Error('LDAP did not return a valid userAccountControl value');\nif ((currentUac & 0x2) !== 0) throw new Error('AD account is already disabled; no response change made');\nif (adminCount === 1) throw new Error('AD account is protected by adminCount; exception containment refused');\nif (servicePrincipalNames.length > 0) throw new Error('AD account has a service principal name; exception containment refused');\nif (directGroups.some((group) => protectedGroups.has(group))) {\n  throw new Error('AD account belongs directly to a protected privileged group; exception containment refused');\n}\n\nconst mode = String(prep.account_disable_mode || '');\nif (mode === 'eligible_group') {\n  if (!directGroups.includes(String(prep.eligible_group_dn).toLowerCase())) {\n    throw new Error('Routine disablement refused: account is not a direct SOC-SOAR-Disable-Eligible member');\n  }\n} else if (mode === 'human_approved_exception') {\n  if (prep.explicit_exception_approved !== true || prep.action_id !== 'approve_exception') {\n    throw new Error('Exception disablement refused: explicit human approval context is missing');\n  }\n} else {\n  throw new Error('Unknown account-disable mode; no response change made');\n}\n\nreturn [{json:{...prep,ldap_dn:ldapDn,ldap_current_uac:currentUac,ldap_new_uac:currentUac | 0x2}}];"
+      }
+    },
+    {
+      "name": "Restore Block Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2672,
+        208
+      ],
+      "parameters": {
+        "jsCode": "// Preserve the approved response context after the OPNsense API returns its own body.\nconst prep = $('Prepare Actions').item.json;\nconst result = $input.item.json;\nif (result?.status !== 'done') throw new Error('OPNsense alias update did not return status done');\nreturn [{ json: { ...prep, block_ip_result: result } }];"
+      }
+    },
+    {
+      "name": "Restore LDAP Context",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2896,
+        496
+      ],
+      "parameters": {
+        "jsCode": "// Preserve the approved response context after the LDAP update returns its own body.\nconst prep = $('Prepare Actions').item.json;\nreturn [{ json: { ...prep, account_disable_result: $input.item.json } }];"
+      }
+    }
+  ],
+  "connections": {
+    "Slack Interaction Webhook": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Acknowledge Slack Request",
+            "type": "main"
+          },
+          {
+            "index": 0,
+            "node": "Parse Slack Payload",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Is Authorized?": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Lock Key",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "Post Unauthorized",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Route By Action": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Prepare Actions",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "Build Reject Update",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "Build Investigate Update",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "node": "Prepare Actions",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prepare Actions": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Should Block IP?",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Should Block IP?": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "OPNsense Block IP",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "Skip Block IP",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Should Disable Account?": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "LDAP Search User",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "Skip Disable Account",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Should Isolate Host?": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Wazuh Isolate Host",
+            "type": "main"
+          }
+        ],
+        [
+          {
+            "index": 0,
+            "node": "Skip Isolate Host",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Wazuh Isolate Host": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Aggregate Results",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Skip Isolate Host": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Aggregate Results",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Aggregate Results": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Build Slack Update",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Build Slack Update": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Update Slack Message",
+            "type": "main"
+          },
+          {
+            "index": 0,
+            "node": "TheHive Add Action Log",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Build Reject Update": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Update Slack Message",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Build Investigate Update": {
+      "main": [
+        [
+          {
+            "index": 0,
+            "node": "Update Slack Message",
+            "type": "main"
+          }
+        ]
+      ]
+    },
+    "Build Approval Lock Key": {
+      "main": [
+        [
+          {
+            "node": "Redis Increment Approval Lock",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Increment Approval Lock": {
+      "main": [
+        [
+          {
+            "node": "Mark Approval Lock Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Approval Lock Outcome": {
+      "main": [
+        [
+          {
+            "node": "Is First Approval?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is First Approval?": {
+      "main": [
+        [
+          {
+            "node": "Route By Action",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse Slack Payload": {
+      "main": [
+        [
+          {
+            "node": "Is Supported Decision?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Supported Decision?": {
+      "main": [
+        [
+          {
+            "node": "Is Authorized?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LDAP Search User": {
+      "main": [
+        [
+          {
+            "node": "Verify Eligible AD Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Verify Eligible AD Account": {
+      "main": [
+        [
+          {
+            "node": "LDAP Disable Account",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Block IP": {
+      "main": [
+        [
+          {
+            "node": "Should Disable Account?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Skip Disable Account": {
+      "main": [
+        [
+          {
+            "node": "Should Isolate Host?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "OPNsense Block IP": {
+      "main": [
+        [
+          {
+            "node": "Restore Block Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore Block Context": {
+      "main": [
+        [
+          {
+            "node": "Should Disable Account?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "LDAP Disable Account": {
+      "main": [
+        [
+          {
+            "node": "Restore LDAP Context",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Restore LDAP Context": {
+      "main": [
+        [
+          {
+            "node": "Should Isolate Host?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner"
+  }
+}
