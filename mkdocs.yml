@@ -86,6 +86,7 @@ nav:
   - The Lab:
       - lab/index.md
       - Architecture: lab/architecture.md
+      - Approval-Gated SOAR: lab/soar.md
   - Operations:
       - operations/index.md
       - Results: operations/results.md
