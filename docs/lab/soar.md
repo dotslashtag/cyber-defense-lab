@@ -35,7 +35,7 @@ flowchart LR
 | Workflow | Triggered by | What it does | Where a human decides |
 |---|---|---|---|
 | **SOAR Master v2** | Wazuh alert to a token-protected webhook | Normalizes, removes duplicates (Redis), classifies, pulls Splunk context, enriches observables through the three sub-workflows, gets a local AI triage note (Ollama), opens a TheHive alert, notifies Slack | Approval-tier alerts get a Slack approval card. Nothing is contained automatically |
-| **Brute Force v2** | Wazuh brute-force and spray rules (510120–510122, 510130–510132) | Safety gate (allow-listed rules, protected accounts), 15-minute de-duplication, TheHive alert (severity 4 for the possible-compromise rule 510132), Slack approval card | Approve, Reject or Investigate in Slack |
+| **Brute Force v2** | Wazuh brute-force and spray rules (510120–510122, 510130–510132) | Safety gate (allow-listed rules, protected accounts), 15-minute de-duplication, TheHive alert (severity 4 for the possible-compromise rule 510132), Slack approval card | Approve the routine actions, approve a named-account exception, Reject, or Investigate, all in Slack |
 | **Response Handler** | A button click on a Slack approval card | Verifies Slack's signature, checks the clicker is an authorized approver, takes a one-time approval lock, then runs only the approved, policy-permitted action. Updates Slack and logs to TheHive | The signed click **is** the authorization. Host isolation is disabled |
 | **Enrich IP / Domain / Hash** | Called by SOAR Master v2 | Validates the observable, looks for recent sightings in Splunk and matches in MISP, and returns a normalized result | n/a (read-only) |
 | **EVTX Hunter → TheHive** | The [EVTX Hunter](../tools/evtx-hunter.md) CLI | Validates the report, caps findings, opens one TheHive alert per report with a deterministic `sourceRef` (duplicates are refused) | The analyst triages the alert. No response action |
@@ -48,9 +48,20 @@ flowchart LR
 - **Approvals are verified, not trusted.** The Response Handler checks Slack's HMAC-SHA256
   signature with a constant-time comparison and a 5-minute replay window, using a key stored
   outside the workflow. It then checks the clicking user against an allow-list.
-- **Blast radius is limited even after approval.** An account can only be disabled if it is
-  in a dedicated AD group (`SOC-SOAR-Disable-Eligible`), and the handler re-checks that live
-  before acting. Admin and service accounts are out of reach.
+- **Blast radius is limited even after approval.** There are two approval paths, and the
+  handler re-checks Active Directory live before any change:
+    - **Routine:** the account must be a direct member of `SOC-SOAR-Disable-Eligible`.
+    - **Exception:** a separate, explicitly labelled button for one named account outside that
+      group. The analyst has to choose it on purpose.
+
+  Both paths refuse:
+    - protected names (Administrator, krbtgt and others);
+    - `svc_` accounts and any account with a service principal name;
+    - accounts flagged `adminCount`;
+    - members of privileged groups such as Domain Admins;
+    - accounts that are already disabled.
+
+  IP blocking is limited to the controlled simulation source. Host isolation is off.
 - **Each decision runs once.** A Redis lock makes a second click on the same card a no-op.
 - **De-duplication everywhere.** Repeated alerts within 15 minutes do not create new cases.
   TheHive refuses a second alert with the same `sourceRef`.
