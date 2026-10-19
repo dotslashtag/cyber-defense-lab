@@ -1,6 +1,6 @@
 """Sanitize n8n workflow exports for publishing.
 
-Removes instance-specific IDs, credential references, webhook IDs, Slack channel IDs and
+Removes instance-specific IDs, credential references, webhook IDs, Slack channel and user IDs and
 anything that looks like a secret, then re-scans the result and fails if a secret pattern
 survives. Lab IP addresses (10.10.x.x) are kept on purpose: they are fictional lab values.
 
@@ -15,6 +15,7 @@ from pathlib import Path
 
 REDACTED = "<REDACTED>"
 SLACK_CHANNEL = "C0SLACKCHANNEL"
+SLACK_USER = "U0SLACKUSER"
 
 # Top-level workflow keys that are instance metadata, run data or internal IDs.
 DROP_WORKFLOW_KEYS = {
@@ -37,6 +38,8 @@ SECRET_PATTERNS = [
         r"(?i)\b(password|passwd|secret|api[_-]?key|token)\b\s*[:=]\s*['\"][^'\"$`{}\s]{6,}['\"]")),
 ]
 SLACK_CHANNEL_RE = re.compile(r"\b[CG]0[A-Z0-9]{7,11}\b")
+# Slack user (U/W) and workspace (T) IDs, e.g. an approver allow-list in a Code node.
+SLACK_USER_RE = re.compile(r"\b[UWT]0[A-Z0-9]{7,11}\b")
 SENSITIVE_HEADER = re.compile(r"(?i)(auth|token|key|secret|signature|cookie|password)")
 
 
@@ -45,7 +48,8 @@ def _scrub_string(text, findings, where):
         if pattern.search(text):
             findings.append(f"{where}: {label}")
             text = pattern.sub(REDACTED, text)
-    return SLACK_CHANNEL_RE.sub(SLACK_CHANNEL, text)
+    text = SLACK_CHANNEL_RE.sub(SLACK_CHANNEL, text)
+    return SLACK_USER_RE.sub(SLACK_USER, text)
 
 
 def _walk(value, findings, where):
@@ -113,8 +117,11 @@ def check(workflow):
     for label, pattern in SECRET_PATTERNS:
         if pattern.search(text):
             problems.append(f"secret pattern: {label}")
-    if SLACK_CHANNEL_RE.sub("", text.replace(SLACK_CHANNEL, "")) != text.replace(SLACK_CHANNEL, ""):
+    placeholders_removed = text.replace(SLACK_CHANNEL, "").replace(SLACK_USER, "")
+    if SLACK_CHANNEL_RE.search(placeholders_removed):
         problems.append("Slack channel id present")
+    if SLACK_USER_RE.search(placeholders_removed):
+        problems.append("Slack user or workspace id present")
     return problems
 
 

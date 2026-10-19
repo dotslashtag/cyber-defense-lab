@@ -12,6 +12,7 @@ spec.loader.exec_module(sanitize)
 FAKE_SLACK = "xo" + "xb-" + "1234567890-abcdefghijkl"
 FAKE_HEX = "ab" * 20
 FAKE_CHANNEL = "C0" + "ABCDEF1234"
+FAKE_USER = "U0" + "ABCDE1234"
 
 
 def raw_workflow():
@@ -31,7 +32,8 @@ def raw_workflow():
                                 {"name": "Content-Type", "value": "application/json"}]}}},
             {"id": "n3", "name": "Code", "type": "n8n-nodes-base.code",
              "parameters": {"jsCode": f"const ch = '{FAKE_CHANNEL}';\nconst t = '{FAKE_SLACK}';\n"
-                                      f"const h = '{FAKE_HEX}';\nconst k = $env.SIGNING_KEY;"}},
+                                      f"const h = '{FAKE_HEX}';\nconst approvers = ['{FAKE_USER}'];\n"
+                                      "const k = $env.SIGNING_KEY;"}},
             {"id": "n4", "name": "Enrich", "type": "n8n-nodes-base.executeWorkflow",
              "parameters": {"workflowId": {"__rl": True, "value": "Abc123",
                                            "cachedResultName": "SOAR Enrich IP"}}},
@@ -62,6 +64,7 @@ def test_code_secrets_and_channel_ids_redacted_env_refs_kept():
     clean, findings = sanitize.sanitize(raw_workflow())
     code = clean["nodes"][2]["parameters"]["jsCode"]
     assert FAKE_SLACK not in code and FAKE_HEX not in code and FAKE_CHANNEL not in code
+    assert FAKE_USER not in code and "U0SLACKUSER" in code
     assert "C0SLACKCHANNEL" in code and "$env.SIGNING_KEY" in code
     assert {f.split(": ")[1] for f in findings} == {"slack token", "long hex"}
 
