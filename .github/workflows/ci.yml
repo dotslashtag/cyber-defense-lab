@@ -45,6 +45,7 @@ jobs:
       - run: pip install -r requirements-detections.txt -e tools/evtx-hunter
       - run: pytest detections/tests -v
       - run: pytest tools/detection-heartbeat/tests -v
+      - run: pytest n8n-workflows/tests -v
 
   evtx-hunter:
     name: EVTX Hunter tests
