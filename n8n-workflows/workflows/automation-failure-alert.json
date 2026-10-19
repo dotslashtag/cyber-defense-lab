@@ -1,0 +1,201 @@
+{
+  "name": "SOC — Automation Failure Alert",
+  "nodes": [
+    {
+      "name": "Error Trigger",
+      "type": "n8n-nodes-base.errorTrigger",
+      "typeVersion": 1,
+      "position": [
+        -600,
+        300
+      ],
+      "parameters": {}
+    },
+    {
+      "name": "Build Message",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -380,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json || {};\nconst wf = d.workflow || {};\nconst ex = d.execution || {};\nconst err = ex.error || {};\nconst workflow_name = String(wf.name || 'unknown workflow');\nconst failed_node = String((err.node && err.node.name) || ex.lastNodeExecuted || 'unknown node');\nconst mode = String(ex.mode || 'unknown');\nconst exec_id = String(ex.id || 'unknown');\nconst exec_url = String(ex.url || '');\nconst ts = new Date().toISOString();\nlet msg = String(err.message || 'no error message');\nmsg = msg\n  .replace(/xox[abposr]-[A-Za-z0-9-]{10,}/g, '<redacted>')\n  .replace(/eyJ[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{10,}\\.[A-Za-z0-9_-]{5,}/g, '<redacted>')\n  .replace(/-----BEGIN[\\s\\S]*?PRIVATE KEY-----/g, '<redacted>')\n  .replace(/\\b[A-Fa-f0-9]{32,}\\b/g, '<redacted>')\n  .replace(/(bearer\\s+)[A-Za-z0-9._~+/=-]{16,}/gi, '$1<redacted>')\n  .replace(/((?:password|passwd|secret|api[_-]?key|token)\\s*[:=]\\s*)\\S+/gi, '$1<redacted>');\nconst error_message = msg.slice(0, 300);\nconst safe = (s) => String(s).replace(/[^A-Za-z0-9_.:-]/g, '_').slice(0, 120);\nconst storm_key = `soc:erralert:${safe(workflow_name)}:${safe(failed_node)}`;\nreturn [{ json: { workflow_name, failed_node, error_message, exec_id, exec_url, mode, ts, storm_key } }];"
+      }
+    },
+    {
+      "name": "Redis Storm Guard",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -160,
+        300
+      ],
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ $json.storm_key }}",
+        "expire": true,
+        "ttl": 600
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "redis": {
+          "name": "<redis credential>"
+        }
+      }
+    },
+    {
+      "name": "Decide & Build Slack",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        60,
+        300
+      ],
+      "parameters": {
+        "jsCode": "const b = $('Build Message').item.json;\nconst guard = $input.first().json || {};\nconst counter = Number(Object.values(guard)[0]);\nconst redisOk = Number.isInteger(counter) && counter >= 1;\nconst note = redisOk ? '' : ' _(storm guard unavailable)_';\nconst send = redisOk ? (counter === 1) : true;\nconst text = `:rotating_light: SOC automation failure: ${b.workflow_name} / ${b.failed_node}`;\nconst blocks = [\n  { type: 'header', text: { type: 'plain_text', text: ':rotating_light: SOC Automation Failure', emoji: true } },\n  { type: 'section', fields: [\n    { type: 'mrkdwn', text: `*Workflow:*\\n${b.workflow_name}` },\n    { type: 'mrkdwn', text: `*Failed node:*\\n${b.failed_node}` },\n    { type: 'mrkdwn', text: `*Execution:*\\n${b.exec_id}` },\n    { type: 'mrkdwn', text: `*Mode:*\\n${b.mode}` },\n    { type: 'mrkdwn', text: `*Time (UTC):*\\n${b.ts}${note}` }\n  ] },\n  { type: 'section', text: { type: 'mrkdwn', text: '*Error:*\\n```' + b.error_message + '```' } }\n];\nif (b.exec_url) blocks.push({ type: 'actions', elements: [{ type: 'button', text: { type: 'plain_text', text: 'Open execution' }, url: b.exec_url, action_id: 'open_exec' }] });\nconst payload = JSON.stringify({ channel: 'C0SLACKCHANNEL', text, blocks });\nreturn [{ json: { ...b, storm_counter: redisOk ? counter : null, storm_guard_ok: redisOk, _send: send, _slack_payload: payload } }];"
+      }
+    },
+    {
+      "name": "Should Send?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        280,
+        300
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "send",
+              "leftValue": "={{ $json._send }}",
+              "operator": {
+                "operation": "true",
+                "singleValue": true,
+                "type": "boolean"
+              }
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Slack Post Failure",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        500,
+        200
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._slack_payload }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      }
+    },
+    {
+      "name": "Suppressed By Storm Guard",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [
+        500,
+        400
+      ],
+      "parameters": {}
+    }
+  ],
+  "connections": {
+    "Error Trigger": {
+      "main": [
+        [
+          {
+            "node": "Build Message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Message": {
+      "main": [
+        [
+          {
+            "node": "Redis Storm Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Storm Guard": {
+      "main": [
+        [
+          {
+            "node": "Decide & Build Slack",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Decide & Build Slack": {
+      "main": [
+        [
+          {
+            "node": "Should Send?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Should Send?": {
+      "main": [
+        [
+          {
+            "node": "Slack Post Failure",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Suppressed By Storm Guard",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "timezone": "Asia/Manila"
+  }
+}
