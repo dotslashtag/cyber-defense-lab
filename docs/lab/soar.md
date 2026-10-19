@@ -39,6 +39,7 @@ flowchart LR
 | **Response Handler** | A button click on a Slack approval card | Verifies Slack's signature, checks the clicker is an authorized approver, takes a one-time approval lock, then runs only the approved, policy-permitted action. Updates Slack and logs to TheHive | The signed click **is** the authorization. Host isolation is disabled |
 | **Enrich IP / Domain / Hash** | Called by SOAR Master v2 | Validates the observable, looks for recent sightings in Splunk and matches in MISP, and returns a normalized result | n/a (read-only) |
 | **EVTX Hunter → TheHive** | The [EVTX Hunter](../tools/evtx-hunter.md) CLI | Validates the report, caps findings, opens one TheHive alert per report with a deterministic `sourceRef` (duplicates are refused) | The analyst triages the alert. No response action |
+| **Automation Failure Alert** | Any of the seven workflows above failing (n8n Error Workflow) | Posts one short Slack message: workflow, failed node, trimmed error text, execution ID and time. No alert data. A storm guard sends at most one message per workflow and node every 10 minutes | The analyst follows up. The failed alert itself is still in Wazuh and Splunk |
 
 ## Design choices
 
@@ -63,6 +64,11 @@ flowchart LR
 
   IP blocking is limited to the controlled simulation source. Host isolation is off.
 - **Each decision runs once.** A Redis lock makes a second click on the same card a no-op.
+- **Failures are loud.** The workflows fail closed: if a safety step like de-duplication can't
+  be verified, they stop instead of acting. Every one of them is wired to the Automation Failure
+  Alert, so a stopped run reaches Slack instead of sitting silently in n8n. The alert itself fails
+  *open*: if Redis is down, it still sends, because a missed failure alert is worse than a
+  duplicate one.
 - **De-duplication everywhere.** Repeated alerts within 15 minutes do not create new cases.
   TheHive refuses a second alert with the same `sourceRef`.
 - **Reusable enrichment.** IP, domain and hash lookups are separate sub-workflows, so every

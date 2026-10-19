@@ -10,6 +10,7 @@ The lab's SOAR workflows, sanitized for publishing. Design, call map and testing
 | `workflows/response-handler-slack-approval.json` | Response Handler: Slack approval |
 | `workflows/enrich-ip.json`, `enrich-domain.json`, `enrich-hash.json` | Enrichment sub-workflows |
 | `workflows/evtx-hunter-thehive.json` | EVTX Hunter findings to TheHive alert |
+| `workflows/automation-failure-alert.json` | Error Workflow: posts failed runs of the workflows above to Slack |
 
 ## Importing
 
