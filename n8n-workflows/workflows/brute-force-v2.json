@@ -1,0 +1,411 @@
+{
+  "name": "Brute Force Response — Approval-Gated v2",
+  "nodes": [
+    {
+      "name": "Wazuh Brute Force Webhook v2",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        -1300,
+        180
+      ],
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "wazuh-brute-force-v2",
+        "authentication": "none",
+        "responseMode": "responseNode",
+        "options": {}
+      }
+    },
+    {
+      "name": "Normalize & Safety Gate",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1080,
+        180
+      ],
+      "parameters": {
+        "jsCode": "const body = $input.first().json.body || $input.first().json;\nconst allowedRules = new Set(['510120', '510121', '510122', '510130', '510131', '510132']);\nconst ruleId = String(body?.rule?.id || '');\nconst level = Number(body?.rule?.level || 0);\nconst groups = Array.isArray(body?.rule?.groups) ? body.rule.groups : [];\nconst rawUser = String(\n  body?.data?.win?.eventdata?.targetUserName ||\n  body?.data?.win?.eventdata?.subjectUserName ||\n  body?.data?.srcuser || ''\n).trim();\nconst username = rawUser.replace(/^.*\\\\/, '').replace(/@.*$/, '');\nconst srcIp = String(\n  body?.data?.win?.eventdata?.ipAddress ||\n  body?.data?.srcip ||\n  body?.data?.src_ip || ''\n).trim();\nconst isIPv4 = (value) => /^(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$/.test(value);\nconst protectedAccounts = new Set(['administrator', 'admin', 'guest', 'krbtgt', 'wazuh', 'splunk', 'thehive', 'n8n', 'root']);\nconst controlledSimulationSource = srcIp === '10.10.3.3';\nlet skipReason = '';\nif (!allowedRules.has(ruleId)) skipReason = `unsupported brute-force rule: ${ruleId || 'missing'}`;\nelse if (level < 10) skipReason = `rule level below threshold: ${level}`;\nelse if (!username || username.endsWith('$') || protectedAccounts.has(username.toLowerCase())) skipReason = 'protected, machine, or missing account';\nelse if (!isIPv4(srcIp)) skipReason = 'missing or invalid source IPv4 address';\nconst eventId = String(body?.data?.win?.system?.eventRecordID || body?.data?.win?.system?.eventRecordId || body?.id || body?.timestamp || Date.now());\nconst sourceRef = `wazuh-brute-v2-${ruleId}-${eventId}`;\nreturn [{json:{\n  skip: Boolean(skipReason),\n  skip_reason: skipReason,\n  rule_id: ruleId,\n  rule_level: level,\n  rule_desc: String(body?.rule?.description || 'Brute-force detection'),\n  groups,\n  username,\n  src_ip: srcIp,\n  agent_name: String(body?.agent?.name || 'unknown'),\n  agent_id: String(body?.agent?.id || ''),\n  event_id: eventId,\n  timestamp: String(body?.timestamp || new Date().toISOString()),\n  source_ref: sourceRef,\n  controlled_simulation_source: controlledSimulationSource,\n  scenario: 'BRUTE_FORCE'\n}}];"
+      }
+    },
+    {
+      "name": "Is Unsafe or Unsupported?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -850,
+        180
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "skip",
+              "leftValue": "={{ $json.skip }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Respond Skipped",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        -620,
+        60
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'skipped', reason: $('Normalize & Safety Gate').item.json.skip_reason }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Redis Increment Dedup Counter",
+      "type": "n8n-nodes-base.redis",
+      "typeVersion": 1,
+      "position": [
+        -620,
+        260
+      ],
+      "parameters": {
+        "operation": "incr",
+        "key": "={{ 'soar:brute-v2:' + $json.source_ref }}",
+        "expire": true,
+        "ttl": 900
+      },
+      "credentials": {
+        "redis": {
+          "name": "<redis credential>"
+        }
+      }
+    },
+    {
+      "name": "Mark Dedup Outcome",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -390,
+        260
+      ],
+      "parameters": {
+        "jsCode": "const alert = $('Normalize & Safety Gate').item.json;\nconst counter = Number(Object.values($input.first().json)[0]);\nif (!Number.isInteger(counter) || counter < 1) throw new Error('Redis did not return a valid deduplication counter');\nreturn [{json:{...alert,dedup_count:counter,is_duplicate:counter > 1}}];"
+      }
+    },
+    {
+      "name": "Is Duplicate?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        -160,
+        260
+      ],
+      "parameters": {
+        "conditions": {
+          "combinator": "and",
+          "conditions": [
+            {
+              "id": "duplicate",
+              "leftValue": "={{ $json.is_duplicate }}",
+              "operator": {
+                "operation": "equals",
+                "type": "boolean"
+              },
+              "rightValue": true
+            }
+          ],
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 1
+          }
+        },
+        "options": {}
+      }
+    },
+    {
+      "name": "Respond Skipped Duplicate",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        70,
+        130
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify({ status: 'skipped', reason: 'duplicate', source_ref: $('Mark Dedup Outcome').item.json.source_ref }) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    },
+    {
+      "name": "Build TheHive Alert",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        70,
+        380
+      ],
+      "parameters": {
+        "jsCode": "const d = $input.first().json;\nconst isCompromise = d.rule_id === '510132';\nconst title = isCompromise\n  ? `[CRITICAL] Possible account compromise: ${d.username} after brute force from ${d.src_ip}`\n  : `[REVIEW REQUIRED] Brute Force: ${d.username} from ${d.src_ip}`;\nconst severity = isCompromise ? 4 : 3;\nconst body = {\n  title,\n  description: [\n    'Brute-force activity requires analyst approval before containment.',\n    `Rule: ${d.rule_id} - ${d.rule_desc}`,\n    `Agent: ${d.agent_name}`,\n    `Target account: ${d.username}`,\n    `Source IP: ${d.src_ip}`,\n    `Dedup count: ${d.dedup_count}`,\n    'Automated account disablement is deliberately disabled.'\n  ].join('\\n'),\n  type: 'external',\n  source: 'wazuh-n8n-soar',\n  sourceRef: d.source_ref,\n  severity,\n  tlp: 2,\n  tags: ['brute_force', 'T1110', 'approval_required', d.agent_name]\n};\nreturn [{json:{...d,_hive_body:JSON.stringify(body)}}];"
+      }
+    },
+    {
+      "name": "TheHive Create Alert",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        300,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "http://10.10.1.6:9000/api/v1/alert",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "theHiveProjectApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._hive_body }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "theHiveProjectApi": {
+          "name": "<theHiveProjectApi credential>"
+        }
+      }
+    },
+    {
+      "name": "Build Approval Request",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        530,
+        380
+      ],
+      "parameters": {
+        "jsCode": "const d = $('Build TheHive Alert').item.json;\nconst hive = $input.first().json;\nconst hiveId = hive?._id || hive?.id;\nif (!hiveId) throw new Error('TheHive did not return an alert ID; approval request not sent');\n\nfunction isIPv4(value) {\n  return typeof value === 'string' && /^(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)(?:\\.(?:25[0-5]|2[0-4]\\d|1?\\d?\\d)){3}$/.test(value);\n}\nfunction isEligibleAccountName(value) {\n  if (typeof value !== 'string' || !/^[A-Za-z][A-Za-z0-9._-]{0,63}$/.test(value)) return false;\n  const name = value.toLowerCase();\n  return !['administrator', 'admin', 'guest', 'krbtgt', 'wazuh', 'splunk', 'thehive', 'n8n', 'root'].includes(name) && !name.startsWith('svc_');\n}\n\nconst allowBlockIp = d.controlled_simulation_source === true && isIPv4(d.src_ip);\nconst validTargetAccount = isEligibleAccountName(d.username);\nconst routinePolicy = {\n  allow_block_ip: allowBlockIp,\n  allow_disable_account: validTargetAccount,\n  account_disable_mode: 'eligible_group',\n  allow_human_approved_exception: false,\n  allow_isolate_host: false,\n};\nconst exceptionPolicy = {\n  allow_block_ip: false,\n  allow_disable_account: validTargetAccount,\n  account_disable_mode: 'human_approved_exception',\n  allow_human_approved_exception: true,\n  human_approval_required: true,\n  allow_isolate_host: false,\n};\nconst baseContext = {\n  alert_id:hiveId,\n  rule_id:d.rule_id,\n  scenario:d.scenario,\n  confidence:100,\n  tier:'human_approval_required',\n  auto_candidate:false,\n  src_ip:d.src_ip,\n  dest_ip:'',\n  username:d.username,\n  agent_name:d.agent_name,\n  agent_id:d.agent_id,\n  recommended_actions:[\n    'Validate failed-logon volume and affected account',\n    'Review source history in Splunk and Wazuh',\n    'Use the routine path only for SOC-SOAR-Disable-Eligible members',\n    'Use the exception path only for a named account after analyst containment approval'\n  ].join('|'),\n};\nconst routineContext = {\n  ...baseContext,\n  ioc_to_block: allowBlockIp ? d.src_ip : '',\n  accounts_to_disable: validTargetAccount ? d.username : '',\n  action_policy: routinePolicy,\n};\nconst exceptionContext = {\n  ...baseContext,\n  ioc_to_block: '',\n  accounts_to_disable: validTargetAccount ? d.username : '',\n  action_policy: exceptionPolicy,\n};\nconst routineValue = JSON.stringify(routineContext);\nconst exceptionValue = JSON.stringify(exceptionContext);\nconst policyLines = [\n  allowBlockIp\n    ? '*Routine IP action after approval:* add the controlled simulation IP ' + d.src_ip + ' to SOC_BRUTE_BLOCK.'\n    : '*Routine IP action:* none. The source is not the controlled test IP.',\n  validTargetAccount\n    ? '*Routine account action after approval:* disable ' + d.username + ' only after SOC-SOAR-Disable-Eligible verification.'\n    : '*Routine account action:* none. The account name fails the automation safety checks.',\n  validTargetAccount\n    ? '*Exception account action:* a separate named-account approval can disable only ' + d.username + '; protected, privileged, service, ambiguous, and already-disabled accounts are refused.'\n    : ''\n].filter(Boolean);\nconst actions = [\n  {type:'button',style:'primary',text:{type:'plain_text',text:'Approve Routine Actions'},action_id:'approve_all',value:routineValue},\n  {type:'button',style:'danger',text:{type:'plain_text',text:'Approve Account Disable (Exception)'},action_id:'approve_exception',value:exceptionValue},\n  {type:'button',style:'danger',text:{type:'plain_text',text:'Reject'},action_id:'reject',value:routineValue},\n  {type:'button',text:{type:'plain_text',text:'Investigate First'},action_id:'investigate',value:routineValue}\n];\nconst blocks = [\n  {type:'header',text:{type:'plain_text',text:'ACTION REQUIRED: ' + d.scenario,emoji:true}},\n  {type:'section',text:{type:'mrkdwn',text:'*' + d.rule_desc + '*\\nTarget account: ' + d.username + '\\nSource IP: ' + d.src_ip + '\\n\\n' + policyLines.join('\\n')}},\n  {type:'actions',block_id:'soar_approval_actions_v3',elements:actions}\n];\nreturn [{json:{...d,_hive_id:hiveId,_approval_payload:JSON.stringify({channel:'C0SLACKCHANNEL',text:'Approval required: brute-force activity on ' + d.agent_name,blocks})}}];"
+      }
+    },
+    {
+      "name": "Post Approval Request",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "alwaysOutputData": true,
+      "onError": "continueRegularOutput",
+      "position": [
+        760,
+        380
+      ],
+      "parameters": {
+        "method": "POST",
+        "url": "https://slack.com/api/chat.postMessage",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "slackApi",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ $json._approval_payload }}",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "credentials": {
+        "slackApi": {
+          "name": "<slackApi credential>"
+        }
+      }
+    },
+    {
+      "name": "Build Final Summary",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        990,
+        380
+      ],
+      "parameters": {
+        "jsCode": "const d = $('Build Approval Request').item.json;\nconst slack = $input.first().json;\nreturn [{json:{\n  status:'approval_requested',\n  scenario:d.scenario,\n  source_ref:d.source_ref,\n  thehive_alert_id:d._hive_id,\n  approval_message_posted:slack?.ok === true,\n  action_policy:'account disable is disabled; only a controlled source IP may be considered after approval',\n  timestamp:new Date().toISOString()\n}}];"
+      }
+    },
+    {
+      "name": "Respond to Webhook",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1220,
+        380
+      ],
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($('Build Final Summary').item.json) }}",
+        "options": {
+          "responseCode": 200
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Wazuh Brute Force Webhook v2": {
+      "main": [
+        [
+          {
+            "node": "Normalize & Safety Gate",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Normalize & Safety Gate": {
+      "main": [
+        [
+          {
+            "node": "Is Unsafe or Unsupported?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Unsafe or Unsupported?": {
+      "main": [
+        [
+          {
+            "node": "Respond Skipped",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Redis Increment Dedup Counter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Redis Increment Dedup Counter": {
+      "main": [
+        [
+          {
+            "node": "Mark Dedup Outcome",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Mark Dedup Outcome": {
+      "main": [
+        [
+          {
+            "node": "Is Duplicate?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Is Duplicate?": {
+      "main": [
+        [
+          {
+            "node": "Respond Skipped Duplicate",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Build TheHive Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build TheHive Alert": {
+      "main": [
+        [
+          {
+            "node": "TheHive Create Alert",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "TheHive Create Alert": {
+      "main": [
+        [
+          {
+            "node": "Build Approval Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Approval Request": {
+      "main": [
+        [
+          {
+            "node": "Post Approval Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Post Approval Request": {
+      "main": [
+        [
+          {
+            "node": "Build Final Summary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Final Summary": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "saveManualExecutions": true,
+    "timezone": "Asia/Manila",
+    "executionOrder": "v1"
+  }
+}
