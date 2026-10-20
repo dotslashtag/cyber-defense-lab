@@ -14,7 +14,8 @@ of running a full detect → investigate → respond loop against emulated attac
 | `detections/` | Detection-as-code: Sigma, Wazuh XML and Splunk SPL, tested in CI against sample logs | ✅ Week 2 |
 | `casebook/` | Incident reports for purple-team operations OP-001 to OP-003 | ✅ Week 3 |
 | `tools/evtx-hunter/` | Sysmon/EVTX triage: process trees, Sigma matching, timelines | ✅ Week 4 |
-| `tools/detection-heartbeat/` | Scheduled probes that check the detections still fire (paused: built and tested, not yet run on a host) | ⏸ |
+| `tools/detection-heartbeat/` | Scheduled probes that check the detections still fire. Phase 1 verified on a live host: 4/4 PASS, canary correctly dead | ✅ Phase 1 |
+| `n8n-workflows/` | Sanitized SOAR workflows (approval-gated response, enrichment, failure alerting) plus the export sanitizer | ✅ |
 
 ## The lab behind it
 
