@@ -35,6 +35,17 @@ A home SOC built like a small enterprise: an Active Directory domain behind OPNs
 
 ## The loop, in one picture
 
+<!-- LOOP DIAGRAM: the project cycle in one picture (Mermaid draws it automatically) -->
+```mermaid
+flowchart LR
+    B[Build<br/>AD lab + SIEM + SOAR] --> A[Attack<br/>Caldera / Kali]
+    A --> S[Score every step<br/>Prevented · Alerted ·<br/>Logged-only · Missed]
+    S --> D[Detect<br/>turn misses into<br/>tested detections]
+    D --> R[Re-run blind<br/>prove the fix]
+    R -->|next operation| A
+    D --> H[Heartbeat<br/>keep proving it works]
+```
+
 <div class="cdl-ba" markdown>
 <div markdown>
 **Native discovery** · OP-002
