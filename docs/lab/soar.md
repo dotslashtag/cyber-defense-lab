@@ -64,15 +64,15 @@ under the three main workflows: each follows one example alert through every ste
     **The story:** on the lab workstation `WIN11-PB026`, the user `jdoe` runs
     `powershell.exe -ep bypass -File C:\Users\Public\update.ps1`. Wazuh fires the lab's custom
     rule with **rule ID `510140`** ("Suspicious PowerShell launched with ExecutionPolicy Bypass",
-    **level 10**, rule groups `powershell`, `execution_policy_bypass`, `windows`) and sends the
+    **rule level 10** on Wazuh's 0–15 scale, rule groups `powershell`, `execution_policy_bypass`, `windows`) and sends the
     alert here.
 
     | # | Step | What it checks or does | In the example |
     |---|---|---|---|
     | 1 | **Webhook** | Receives the Wazuh alert through the token-protected proxy | The alert for rule ID `510140` from `WIN11-PB026` arrives |
-    | 2 | **Parse & Normalize** | Pulls out rule, level, host, user, IPs, command line, domain, hash | Rule ID: `510140`<br>Level: `10`<br>Host: `WIN11-PB026`<br>User: `jdoe`<br>Command line: `powershell.exe -ep bypass -File C:\Users\Public\update.ps1`<br>IP address, domain, hash: none |
+    | 2 | **Parse & Normalize** | Pulls out rule ID, rule level, host, user, IPs, command line, domain, hash | Rule ID: `510140`<br>Rule level: `10`<br>Host: `WIN11-PB026`<br>User: `jdoe`<br>Command line: `powershell.exe -ep bypass -File C:\Users\Public\update.ps1`<br>IP address, domain, hash: none |
     | 3 | **De-duplication** (Redis) | Has this exact alert arrived in the last 5 minutes? If Redis can't answer, stop (fail closed) | First time: continue |
-    | 4 | **Classify Scenario** | Sorts the alert into a scenario and severity using its rule groups and level. Level 7 or higher goes on to triage; lower gets a "low priority" reply | The rule groups include `windows`, and the rule ID `510140` starts with `510` (the lab's own custom rules) → scenario **WINDOWS_HIGH**. Level 10 is below 14 → severity **high**. Level 10 is 7 or higher → on to triage |
+    | 4 | **Classify Scenario** | Sorts the alert into a scenario and severity using its rule groups and rule level. Rule level 7 or higher goes on to triage; lower gets a "low priority" reply | The rule groups include `windows`, and the rule ID `510140` starts with `510` (the lab's own custom rules) → scenario **WINDOWS_HIGH**. Rule level 10 is below 14 → severity **high**. Rule level 10 is 7 or higher → on to triage |
     | 5 | **Splunk context** | Asks Splunk what else this host did in the last 30 minutes | Finds the other recent alerts from `WIN11-PB026` |
     | 6 | **Enrichment** | If the alert has an IP, domain or hash, calls the matching Enrich sub-workflow (Splunk sightings + MISP threat intel) | Nothing to look up → skipped |
     | 7 | **AI triage** (local Ollama) | A local model writes a verdict, confidence and short summary. It **cannot authorize anything** | "Suspicious, 85% confidence, escalate" |
@@ -97,12 +97,12 @@ under the three main workflows: each follows one example alert through every ste
     **The story:** the lab's Kali machine (`10.10.3.3`, the controlled attack source) guesses
     passwords for the test account `jdoe` on `WIN11-PB026`. After 8 failures in 2 minutes, Wazuh
     fires the lab's custom rule with **rule ID `510130`** ("Behavior: Brute force detected",
-    **level 12**).
+    **rule level 12**).
 
     | # | Step | What it checks or does | In the example |
     |---|---|---|---|
     | 1 | **Webhook** | Receives only the 6 brute-force rule IDs (`510120`–`510122`, `510130`–`510132`), through the token-protected proxy | The alert for rule ID `510130` arrives |
-    | 2 | **Normalize & Safety Gate** | Skips the alert unless: the rule ID is one of the 6; the level is 10 or more; the account is not protected (`administrator`, `admin`, `guest`, `krbtgt`, `root`, or the SOC tool accounts `wazuh`, `splunk`, `thehive`, `n8n`), is not a computer account (a name ending in `$`) and is not missing; the source is a valid IPv4 address | Rule ID `510130`: allowed<br>Level `12`: 10 or more<br>Account `jdoe`: not protected<br>Source `10.10.3.3`: valid IPv4<br>→ all checks pass |
+    | 2 | **Normalize & Safety Gate** | Skips the alert unless: the rule ID is one of the 6; the rule level is 10 or more; the account is not protected (`administrator`, `admin`, `guest`, `krbtgt`, `root`, or the SOC tool accounts `wazuh`, `splunk`, `thehive`, `n8n`), is not a computer account (a name ending in `$`) and is not missing; the source is a valid IPv4 address | Rule ID `510130`: allowed<br>Rule level `12`: 10 or more<br>Account `jdoe`: not protected<br>Source `10.10.3.3`: valid IPv4<br>→ all checks pass |
     | 3 | **De-duplication** (Redis) | Has this exact event arrived in the last 15 minutes? If Redis can't answer, stop (fail closed) | First time: continue |
     | 4 | **TheHive alert** | Opens the case. Rule ID `510132` (logon *succeeded* after brute force) gets severity 4, the other five get 3 | Title: `[REVIEW REQUIRED] Brute Force: jdoe from 10.10.3.3`<br>Severity: `3` |
     | 5 | **Approval card** | No case ID from TheHive → no card. The card lists exactly what each button may do. An IP block is offered **only** for the controlled test IP `10.10.3.3` | Card offers: block `10.10.3.3`; disable `jdoe` *if* it is in `SOC-SOAR-Disable-Eligible` |
