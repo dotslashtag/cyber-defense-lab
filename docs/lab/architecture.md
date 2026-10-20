@@ -4,6 +4,17 @@
      On the site: https://dotslashtag.github.io/cyber-defense-lab/lab/architecture/
      Menu: The Lab > Architecture -->
 
+## Network topology
+
+<!-- PICTURE: docs/assets/img/network-topology.svg (click to enlarge). Lab IPs are fictional
+     10.10.x.x values; update the SVG if a host or zone changes. -->
+
+![Lab network topology: OPNsense firewall in front of three zones (MGMT with the SOC tools, TARGET with the monitored Windows and Linux endpoints, ATTACK with Kali and Caldera), and the firewall policy between them](../assets/img/network-topology.svg)
+
+The whole lab runs on one workstation under VMware Workstation. Each zone is its own virtual
+network, and all traffic between zones goes through the OPNsense firewall, which sends its logs to
+Splunk. The workstation also runs the local AI model (Ollama) used for alert triage.
+
 ## Security zones
 
 | Zone | Purpose |
