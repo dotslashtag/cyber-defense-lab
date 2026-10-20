@@ -126,3 +126,17 @@
   color: #5eead4;
   border-color: #2dd4bf;
 }
+
+/* ---------- Lightbox (click-to-enlarge) ----------
+   Screenshots are ~1,100-1,450 px wide, so on a normal monitor GLightbox showed them at their
+   natural size with nothing left to zoom. Open every image at up to 95% of the screen width
+   (90% of the height), keeping its proportions. SVG timelines are vector and stay sharp;
+   PNG screenshots are scaled up slightly, readable but a little soft. */
+.glightbox-container .gslide-image img {
+  width: 95vw;
+  max-width: 95vw;
+  height: auto;
+  max-height: 90vh;
+  object-fit: contain;
+}
+.glightbox-container .gslide-image img[src$=".svg"] { background: #fff; border-radius: 6px; }
