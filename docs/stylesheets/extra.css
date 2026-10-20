@@ -128,15 +128,23 @@
 }
 
 /* ---------- Lightbox (click-to-enlarge) ----------
-   Screenshots are ~1,100-1,450 px wide, so on a normal monitor GLightbox showed them at their
-   natural size with nothing left to zoom. Open every image at up to 95% of the screen width
-   (90% of the height), keeping its proportions. SVG timelines are vector and stay sharp;
-   PNG screenshots are scaled up slightly, readable but a little soft. */
-.glightbox-container .gslide-image img {
-  width: 95vw;
-  max-width: 95vw;
-  height: auto;
-  max-height: 90vh;
-  object-fit: contain;
+   GLightbox only zooms images larger than the screen, and it sizes the frame to the image's
+   natural width (SVGs without a width opened at its 200 px minimum). Force the frame to 95% of
+   the screen width and fit the image inside it (max 90% of the height), keeping proportions.
+   !important is needed because GLightbox's own CSS loads after this file. SVG timelines stay
+   sharp; PNG screenshots are scaled up, so they are readable but a little soft. */
+.glightbox-container .gslide-media {
+  width: 95vw !important;
+  max-width: 95vw !important;
+  background: transparent !important;
+  box-shadow: none !important;
 }
-.glightbox-container .gslide-image img[src$=".svg"] { background: #fff; border-radius: 6px; }
+.glightbox-container .gslide-image img {
+  width: 100% !important;
+  max-width: 100% !important;
+  height: auto !important;
+  max-height: 90vh !important;
+  object-fit: contain !important;
+  background: transparent !important; /* the plugin paints a white box behind images */
+}
+.glightbox-container .gslide-image img[src$=".svg"] { background: #fff !important; border-radius: 6px; }
