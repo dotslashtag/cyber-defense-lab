@@ -1,7 +1,12 @@
 # Detection Heartbeat
 
-> **Status: paused.** The probe, manifest and searches are built and tested in CI, and the
-> searches were dry-run in the lab. The probe has not yet been run on a host.
+> **Status: Phase 1 verified (2026-10-20).** One live run on WIN11-OPS01 (marker
+> `HB-WIN11-OPS01-202610200320`):
+> - all four real detections **PASS**: D1, 510143, 510150 and D3;
+> - the canary `599143` reports **DEAD DETECTION** as designed;
+> - no SOAR side effects.
+>
+> Next is Phase 2: run every 6 hours, verified automatically, failures posted to Slack and TheHive.
 
 Answers one question on a schedule: **"Do our detections still work right now?"**
 
@@ -51,7 +56,11 @@ breaking a real rule.
 
 ## Run it
 
-Run the task as a dedicated standard user with S4U ("do not store password"):
+Run the task as a dedicated **standard** user that is denied interactive and RDP logon. The
+preferred setup is S4U ("do not store password"). On the lab host Windows refused S4U for both a
+domain and a local account (cause still open), so Phase 1 uses a **local** account,
+`WIN11-OPS01\hbprobe`. Its long random password is stored with the task. Either way, the
+command line is:
 
 ```powershell
 powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File C:\ProgramData\SOC\Heartbeat\hb-probe.ps1
@@ -60,7 +69,7 @@ powershell.exe -NoProfile -NonInteractive -ExecutionPolicy RemoteSigned -File C:
 The script prints one JSON line and appends it to `%LOCALAPPDATA%\DetectionHeartbeat\hb-probe.log`:
 
 ```json
-{"marker":"HB-WIN11-OPS01-202610141200","host":"WIN11-OPS01","user":"SOC\\hbprobe","started":"2026-10-14T12:00:03Z","finished":"2026-10-14T12:00:31Z","probes":{"P1":"ran","P2":"ran","P3":"ran"}}
+{"marker":"HB-WIN11-OPS01-202610141200","host":"WIN11-OPS01","user":"WIN11-OPS01\\hbprobe","started":"2026-10-14T12:00:03Z","finished":"2026-10-14T12:00:31Z","probes":{"P1":"ran","P2":"ran","P3":"ran"}}
 ```
 
 Exit code `0` means every probe ran; `1` means at least one probe failed to run.
@@ -76,3 +85,17 @@ Exit code `0` means every probe ran; `1` means at least one probe failed to run.
   an attacker could copy the marker to bypass the detection.
 - Each probe uses up that detection's per-host throttle for a while (D1: 30 min, D3: 15 min).
   Running every 6 h, staggered per host, keeps that blind window small.
+
+## Phase 1 result (2026-10-20, WIN11-OPS01)
+
+| Detection | Probe | Probe evidence | Alert | Verdict | Time to alert |
+|---|---|---|---|---|---|
+| D1 Clustered Discovery (Splunk) | P1 | Sysmon EID 1, marker in `ParentCommandLine` | Scheduled alert fired | PASS | ~9 min (10-minute schedule) |
+| 510143 PowerShell → rundll32 (Wazuh) | P2 | EID 1, marker in `ParentCommandLine` | Alert | PASS | seconds |
+| 510150 Run key (Wazuh) | P3 | EID 13, marker in `TargetObject` | Alert | PASS | seconds |
+| D3 Run/RunOnce key (Splunk) | P3 | EID 13 | Scheduled alert fired | PASS | ~4 min (5-minute schedule) |
+| 599143 canary | — | — | none | DEAD DETECTION (expected) | — |
+
+The probe ran as a standard user (Medium integrity). Rule 510140 (`-ExecutionPolicy Bypass`)
+stayed silent, as intended. A duplicate copy of the task ran at the same time and doubled the
+event counts; the copy was deleted, and it had no effect on the verdicts.
