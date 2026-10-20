@@ -18,6 +18,26 @@ arrived at all).
 Built after one week in which this lab found six Wazuh rules that could never fire and two
 agents that had been silent for weeks, all found by hand.
 
+## How it works
+
+```mermaid
+flowchart LR
+    T[Scheduled task] --> P[hb-probe.ps1<br/>as standard user]
+    P -->|P1 discovery<br/>P2 rundll32<br/>P3 Run key| E[Sysmon events<br/>with HB- marker]
+    E --> W[Wazuh] --> S[(Splunk)]
+    S --> V[Verifier V0–V5<br/>~35 min later]
+    V --> Q{Probe events<br/>seen?}
+    Q -->|yes| A{Alert<br/>seen?}
+    A -->|yes| PASS[PASS]
+    A -->|no| DEAD[DEAD DETECTION]
+    Q -->|no| H{Agent<br/>reporting?}
+    H -->|yes| NR[PROBE NOT RUN]
+    H -->|no| NT[NO TELEMETRY]
+```
+
+A **canary** entry, rule `599143`, has no probe and no rule behind it, so it must always
+report DEAD DETECTION. That proves the verifier can spot a failure.
+
 ## Files
 
 | File | What it is |
