@@ -43,6 +43,9 @@ theme:
 extra_css:
   - stylesheets/extra.css
 
+extra_javascript:
+  - javascripts/mermaid-zoom.js   # click a Mermaid flowchart to enlarge it
+
 plugins:
   - search
   - glightbox:

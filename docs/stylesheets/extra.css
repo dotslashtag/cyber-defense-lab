@@ -148,3 +148,29 @@
   background: transparent !important; /* the plugin paints a white box behind images */
 }
 .glightbox-container .gslide-image img[src$=".svg"] { background: #fff !important; border-radius: 6px; }
+
+/* ---------- Click-to-enlarge for Mermaid flowcharts ----------
+   Works with docs/javascripts/mermaid-zoom.js. The script adds .mermaid-zoomed to the clicked
+   flowchart and sets --mz-scale (how much to grow it to fit the screen). */
+div.mermaid { cursor: zoom-in; }
+body.mermaid-zoom-open::after {            /* dark backdrop behind the enlarged flowchart */
+  content: "";
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, .85);
+  z-index: 1000;
+}
+div.mermaid.mermaid-zoomed {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  width: max-content;
+  max-width: none;
+  margin: 0;
+  padding: .5rem;
+  background: var(--md-default-bg-color);  /* light or dark, matching the site theme */
+  border-radius: 6px;
+  transform: translate(-50%, -50%) scale(var(--mz-scale, 1));
+  z-index: 1001;
+  cursor: zoom-out;
+}
