@@ -9,7 +9,7 @@ and recommends an action. **A human makes the call** in Slack. No workflow conta
 disables anything on its own.
 
 <!-- BUTTONS: edit the text in [ ] and the link in ( ); keep { .md-button } -->
-[:material-github: The 7 workflows (sanitized JSON)](https://github.com/dotslashtag/cyber-defense-lab/tree/main/n8n-workflows){ .md-button .md-button--primary }
+[:material-github: The 8 workflows (sanitized JSON)](https://github.com/dotslashtag/cyber-defense-lab/tree/main/n8n-workflows){ .md-button .md-button--primary }
 
 ## How the pieces fit
 
@@ -40,6 +40,46 @@ flowchart LR
 | **Enrich IP / Domain / Hash** | Called by SOAR Master v2 | Validates the observable, looks for recent sightings in Splunk and matches in MISP, and returns a normalized result | n/a (read-only) |
 | **EVTX Hunter → TheHive** | The [EVTX Hunter](../tools/evtx-hunter.md) CLI | Validates the report, caps findings, opens one TheHive alert per report with a deterministic `sourceRef` (duplicates are refused) | The analyst triages the alert. No response action |
 | **Automation Failure Alert** | Any of the seven workflows above failing (n8n Error Workflow) | Posts one short Slack message: workflow, failed node, trimmed error text, execution ID and time. No alert data. A storm guard sends at most one message per workflow and node every 10 minutes | The analyst follows up. The failed alert itself is still in Wazuh and Splunk |
+
+## What they look like in n8n
+
+<!-- SCREENSHOTS: made from the sanitized JSON files in a throwaway local n8n (same version),
+     never from the live instance, then auto-arranged with n8n's "Tidy up". Click to enlarge. -->
+
+Each picture is the workflow's canvas, made from the published JSON file, so you can follow the
+flow without importing it. Click a picture to enlarge it. The three big workflows also have an
+**Open full size** link: it opens the picture in a new tab, where you can zoom in on the labels.
+
+### SOAR Master v2
+
+![SOAR Master v2: webhook, de-duplication, classification, enrichment sub-workflows, AI triage, TheHive alert, Slack notification and approval request](../assets/img/n8n/soar-master-v2.png)
+[:material-magnify-plus-outline: Open full size](../assets/img/n8n/soar-master-v2.png){ target="_blank" }
+
+### Brute Force v2
+
+![Brute Force v2: webhook, safety gate, Redis de-duplication, TheHive alert and Slack approval request](../assets/img/n8n/brute-force-v2.png)
+[:material-magnify-plus-outline: Open full size](../assets/img/n8n/brute-force-v2.png){ target="_blank" }
+
+### Response Handler (Slack approval)
+
+![Response Handler: Slack click, signature and approver checks, one-time lock, then routing to the approved action only](../assets/img/n8n/response-handler-slack-approval.png)
+[:material-magnify-plus-outline: Open full size](../assets/img/n8n/response-handler-slack-approval.png){ target="_blank" }
+
+### Enrich IP, Domain and Hash
+
+![Enrich IP: validate, Splunk context, MISP lookup, build result](../assets/img/n8n/enrich-ip.png)
+
+![Enrich Domain](../assets/img/n8n/enrich-domain.png)
+
+![Enrich Hash](../assets/img/n8n/enrich-hash.png)
+
+### EVTX Hunter → TheHive
+
+![EVTX Hunter to TheHive: webhook, validate, TheHive alert, response](../assets/img/n8n/evtx-hunter-thehive.png)
+
+### Automation Failure Alert
+
+![Automation Failure Alert: error trigger, message, Redis storm guard, Slack post or suppress](../assets/img/n8n/automation-failure-alert.png)
 
 ## Design choices
 

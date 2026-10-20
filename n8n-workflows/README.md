@@ -12,6 +12,30 @@ The lab's SOAR workflows, sanitized for publishing. Design, call map and testing
 | `workflows/evtx-hunter-thehive.json` | EVTX Hunter findings to TheHive alert |
 | `workflows/automation-failure-alert.json` | Error Workflow: posts failed runs of the workflows above to Slack |
 
+## What they look like
+
+<!-- Screenshots made from these sanitized files in a throwaway local n8n, not the live one. -->
+
+**SOAR Master v2**
+![SOAR Master v2 canvas](../docs/assets/img/n8n/soar-master-v2.png)
+
+**Brute Force v2**
+![Brute Force v2 canvas](../docs/assets/img/n8n/brute-force-v2.png)
+
+**Response Handler: Slack approval**
+![Response Handler canvas](../docs/assets/img/n8n/response-handler-slack-approval.png)
+
+**Enrich IP** (Domain and Hash have the same shape)
+![Enrich IP canvas](../docs/assets/img/n8n/enrich-ip.png)
+
+**EVTX Hunter to TheHive**
+![EVTX Hunter to TheHive canvas](../docs/assets/img/n8n/evtx-hunter-thehive.png)
+
+**Automation Failure Alert**
+![Automation Failure Alert canvas](../docs/assets/img/n8n/automation-failure-alert.png)
+
+All eight, larger and with descriptions: [Approval-Gated SOAR](https://dotslashtag.github.io/cyber-defense-lab/lab/soar/#what-they-look-like-in-n8n).
+
 ## Importing
 
 In n8n, use **Import from File** to bring a workflow in. Credentials are deliberately reduced
