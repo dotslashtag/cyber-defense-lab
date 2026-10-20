@@ -47,7 +47,8 @@ flowchart LR
      never from the live instance, then auto-arranged with n8n's "Tidy up". Click to enlarge. -->
 
 Each picture is the workflow's canvas, made from the published JSON file, so you can follow the
-flow without importing it. Click a picture to enlarge it. The three big workflows also have an
+flow without importing it. Click a picture to enlarge it, or open a **Step by step** box
+under the three main workflows: each follows one example alert through every step. The three big workflows also have an
 **Open full size** link: it opens the picture in a new tab, where you can zoom in on the labels.
 
 ### SOAR Master v2
@@ -55,15 +56,84 @@ flow without importing it. Click a picture to enlarge it. The three big workflow
 ![SOAR Master v2: webhook, de-duplication, classification, enrichment sub-workflows, AI triage, TheHive alert, Slack notification and approval request](../assets/img/n8n/soar-master-v2.png)
 [:material-magnify-plus-outline: Open full size](../assets/img/n8n/soar-master-v2.png){ target="_blank" }
 
+??? example "Step by step, with an example: SOAR Master v2"
+
+    <!-- STEP-BY-STEP BOX: "???" makes it collapsible (closed by default). Everything inside must
+         stay indented by 4 spaces. Example values are illustrative, not from a real incident. -->
+
+    **The story:** on the lab workstation `WIN11-PB026`, the user `jdoe` runs
+    `powershell.exe -ep bypass -File C:\Users\Public\update.ps1`. Wazuh rule `510140`
+    (PowerShell with ExecutionPolicy Bypass, level 10) fires and sends the alert here.
+
+    | # | Step | What it checks or does | In the example |
+    |---|---|---|---|
+    | 1 | **Webhook** | Receives the Wazuh alert through the token-protected proxy | Alert `510140` from `WIN11-PB026` arrives |
+    | 2 | **Parse & Normalize** | Pulls out rule, level, host, user, IPs, command line, domain, hash | Rule `510140`, level 10, user `jdoe`, no IP address |
+    | 3 | **De-duplication** (Redis) | Has this exact alert arrived in the last 5 minutes? If Redis can't answer, stop (fail closed) | First time: continue |
+    | 4 | **Classify Scenario** | Sorts the alert into a scenario and severity using its rule groups and level. Level 7 or higher goes on to triage; lower gets a "low priority" reply | `windows` group + a `510…` rule → **WINDOWS_HIGH**, severity **high** |
+    | 5 | **Splunk context** | Asks Splunk what else this host did in the last 30 minutes | Finds the other recent alerts from `WIN11-PB026` |
+    | 6 | **Enrichment** | If the alert has an IP, domain or hash, calls the matching Enrich sub-workflow (Splunk sightings + MISP threat intel) | Nothing to look up → skipped |
+    | 7 | **AI triage** (local Ollama) | A local model writes a verdict, confidence and short summary. It **cannot authorize anything** | "Suspicious, 85% confidence, escalate" |
+    | 8 | **Approval tier** | Confidence 70% or more **and** "escalate" → an approval card. Otherwise manual only | 85% + escalate → **approval card** |
+    | 9 | **TheHive alert** | Opens the case with the summary, enrichment health and observables | `[SOAR] WINDOWS_HIGH: Suspicious PowerShell…`, severity 3 |
+    | 10 | **Slack notifications** | Posts to the alerts channel, and also to the critical channel when severity is high or critical | Posted to both |
+    | 11 | **Approval card** | Buttons: *Approve Allowed Actions*, *Reject*, *Investigate First*. The **only** action it can ever allow is a firewall block of a source IP that MISP confirms as a known threat | No such IP → card says **"Allowed containment: None"**. The analyst investigates |
+
+    **The point of the example:** the AI said "escalate", but the AI never decides what is
+    allowed. Fixed code does, based on evidence (a MISP match). Had the alert come from an
+    external IP listed in MISP, the card would have offered to block that one IP, and nothing else.
+
 ### Brute Force v2
 
 ![Brute Force v2: webhook, safety gate, Redis de-duplication, TheHive alert and Slack approval request](../assets/img/n8n/brute-force-v2.png)
 [:material-magnify-plus-outline: Open full size](../assets/img/n8n/brute-force-v2.png){ target="_blank" }
 
+??? example "Step by step, with an example: Brute Force v2"
+
+    <!-- STEP-BY-STEP BOX (collapsible). Same story continues in the Response Handler box. -->
+
+    **The story:** the lab's Kali machine (`10.10.3.3`, the controlled attack source) guesses
+    passwords for the test account `jdoe` on `WIN11-PB026`. After 8 failures in 2 minutes, Wazuh
+    rule `510130` (level 12) fires.
+
+    | # | Step | What it checks or does | In the example |
+    |---|---|---|---|
+    | 1 | **Webhook** | Receives only the 6 brute-force rules, through the token-protected proxy | Alert `510130` arrives |
+    | 2 | **Normalize & Safety Gate** | Skips the alert unless: it is one of the 6 rules; level is 10 or more; the account is not protected (`administrator`, `krbtgt`…), not a computer account (`…$`) and not missing; the source is a valid IPv4 address | All checks pass |
+    | 3 | **De-duplication** (Redis) | Has this exact event arrived in the last 15 minutes? If Redis can't answer, stop (fail closed) | First time: continue |
+    | 4 | **TheHive alert** | Opens the case. Rule `510132` (logon *succeeded* after brute force) gets severity 4, the others 3 | `[REVIEW REQUIRED] Brute Force: jdoe from 10.10.3.3`, severity 3 |
+    | 5 | **Approval card** | No case ID from TheHive → no card. The card lists exactly what each button may do. An IP block is offered **only** for the controlled test IP `10.10.3.3` | Card offers: block `10.10.3.3`; disable `jdoe` *if* it is in `SOC-SOAR-Disable-Eligible` |
+    | 6 | **Reply to Wazuh** | Confirms receipt | Done. **Nothing has been changed yet** |
+
+    The four buttons: *Approve Routine Actions*, *Approve Account Disable (Exception)*, *Reject*,
+    *Investigate*. The story continues when the analyst clicks: see the Response Handler below.
+
 ### Response Handler (Slack approval)
 
 ![Response Handler: Slack click, signature and approver checks, one-time lock, then routing to the approved action only](../assets/img/n8n/response-handler-slack-approval.png)
 [:material-magnify-plus-outline: Open full size](../assets/img/n8n/response-handler-slack-approval.png){ target="_blank" }
+
+??? example "Step by step, with an example: Response Handler"
+
+    <!-- STEP-BY-STEP BOX (collapsible). Continues the Brute Force v2 story above. -->
+
+    **The story continues:** the approver `@analyst` clicks **Approve Routine Actions** on the
+    `jdoe` card. One second later a colleague clicks the same button.
+
+    | # | Step | What it checks or does | In the example |
+    |---|---|---|---|
+    | 1 | **Acknowledge** | Replies "OK" to Slack at once (Slack shows an error after 3 seconds) | Slack is happy |
+    | 2 | **Verify the signature** | Slack signs every click with a secret only n8n knows (HMAC-SHA256). Recomputed and compared in constant time; clicks older than 5 minutes are refused | Genuine and fresh: continue. A forged click would stop here |
+    | 3 | **Known button?** | Only the 4 approval buttons are accepted | Approve Routine Actions: OK |
+    | 4 | **Approver?** | The clicker must be on the approver list; anyone else gets "Unauthorized" in the thread | `@analyst` is on the list |
+    | 5 | **One-time lock** (Redis) | The first decision on a card wins; later clicks stop quietly | First click runs. **The colleague's click stops here** |
+    | 6 | **Prepare Actions** | Re-checks the card's policy: which actions are allowed, for which IP and account. Host isolation is always off | Block `10.10.3.3`: allowed. Disable `jdoe`: allowed, routine mode |
+    | 7 | **OPNsense block** | Adds the IP to the firewall alias `SOC_BRUTE_BLOCK` | `10.10.3.3` is blocked |
+    | 8 | **Live AD checks → disable** | Looks the account up in Active Directory **now** and refuses if it is already disabled, flagged `adminCount`, has a service principal name, is in a privileged group, or (routine mode) is not in `SOC-SOAR-Disable-Eligible` | `jdoe` passes → disabled |
+    | 9 | **Update Slack + TheHive** | Rewrites the card with ✅ / ❌ / ➖ per action and logs who approved what in TheHive | Card: ✅ Block IP, ✅ Disable account, ➖ Isolate host (skipped) |
+
+    **What if** `jdoe` had been added to Domain Admins after the alert? Step 8 refuses, nothing
+    changes in AD, and the failure alert tells the team why.
 
 ### Enrich IP, Domain and Hash
 
@@ -109,8 +179,9 @@ flow without importing it. Click a picture to enlarge it. The three big workflow
   Alert, so a stopped run reaches Slack instead of sitting silently in n8n. The alert itself fails
   *open*: if Redis is down, it still sends, because a missed failure alert is worse than a
   duplicate one.
-- **De-duplication everywhere.** Repeated alerts within 15 minutes do not create new cases.
-  TheHive refuses a second alert with the same `sourceRef`.
+- **De-duplication everywhere.** The same alert arriving again within 5 minutes (SOAR Master)
+  or 15 minutes (Brute Force v2) does not create a new case. TheHive refuses a second alert with
+  the same `sourceRef`.
 - **Reusable enrichment.** IP, domain and hash lookups are separate sub-workflows, so every
   intake path enriches observables the same way.
 
