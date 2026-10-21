@@ -91,6 +91,8 @@ can write and defend it on my own. What's next is on the [Roadmap](roadmap.md).
 
 ## Certifications
 
+I passed every certification below through self-study, practising in labs I built myself.
+
 - ISC2 Certified in Cybersecurity (CC), 2024
 
 From my infrastructure career:
