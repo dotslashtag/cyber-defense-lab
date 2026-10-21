@@ -46,7 +46,7 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
 - [MyDFIR SOC course](https://academy.mydfir.com/p/soc): investigations across email, identity,
   Active Directory, network, malware and endpoint; threat hunting with Sigma; Splunk.
   Coursework complete, capstone in progress
-- Microsoft Sentinel and KQL (MyDFIR 30-day Sentinel challenge)
+- Microsoft Sentinel and KQL (30-Day MYDFIR Microsoft SOC Challenge)
 - TryHackMe: more than 60 rooms completed
 
 ## How I work with AI
