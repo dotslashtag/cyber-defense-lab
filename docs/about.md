@@ -37,10 +37,13 @@ Security's *Practical Ethical Hacking* and LinkedIn Learning's *Become an Ethica
 path. Along the way I ran OpenVAS and Nessus scans to find and fix vulnerabilities on my
 own systems.
 
-Offense was where you could get hands-on back then: the tools were free and easy to try,
-while defensive tools like a SIEM were enterprise products you rarely touched outside work.
-Open-source tools such as Wazuh and Sigma, and free licences and trials from vendors like
-Splunk, changed that, and this lab is built on them.
+Back then, offense was where you could learn hands-on. The affordable courses taught ethical
+hacking, and you could download a deliberately vulnerable machine, attack it, and know
+straight away whether it worked. Free defensive tools existed, such as Snort, OSSEC and
+Security Onion, but practising defense was harder: you needed realistic attacks and logs to
+look at, nothing told you what you had missed, and blue-team training was mostly expensive.
+That is why this lab runs both sides: I attack it to give myself something real to defend
+against.
 
 Learning to attack showed me I'm more interested in defending: catching the attacker,
 closing the gap, and proving the fix works. That's why this lab attacks itself on purpose:
