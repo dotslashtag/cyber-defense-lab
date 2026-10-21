@@ -29,6 +29,18 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
 - **Explaining risk to managers.** As an IT Infrastructure Manager I had to justify changes
   in business terms, so I write for the person who has to make the decision.
 
+## How I got here
+
+I started on the offensive side, back when Kali Linux was still called BackTrack. Over the
+years I completed TCM Security's *Practical Ethical Hacking*, CBT Nuggets' *White Hat
+Hacking v10* (Keith Barker) and LinkedIn Learning's *Become an Ethical Hacker* path, and
+ran OpenVAS and Nessus scans to find and fix vulnerabilities on my own systems.
+
+Learning to attack showed me I'm more interested in defending: catching the attacker,
+closing the gap, and proving the fix works. That's why this lab attacks itself on purpose:
+every attack is there to make a detection better. I still keep learning through courses
+and hands-on labs.
+
 ## What I can show you
 
 | Skill | Where to see it |
