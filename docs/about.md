@@ -31,10 +31,11 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
 
 ## How I got here
 
-I started on the offensive side, back when Kali Linux was still called BackTrack. Over the
-years I completed TCM Security's *Practical Ethical Hacking*, CBT Nuggets' *White Hat
-Hacking v10* (Keith Barker) and LinkedIn Learning's *Become an Ethical Hacker* path, and
-ran OpenVAS and Nessus scans to find and fix vulnerabilities on my own systems.
+I started on the offensive side, back when Kali Linux was still called BackTrack. Early on
+I completed CBT Nuggets' *White Hat Hacking v10* (Keith Barker), and more recently TCM
+Security's *Practical Ethical Hacking* and LinkedIn Learning's *Become an Ethical Hacker*
+path. Along the way I ran OpenVAS and Nessus scans to find and fix vulnerabilities on my
+own systems.
 
 Learning to attack showed me I'm more interested in defending: catching the attacker,
 closing the gap, and proving the fix works. That's why this lab attacks itself on purpose:
