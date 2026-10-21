@@ -46,7 +46,8 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
 - [MyDFIR SOC course](https://academy.mydfir.com/p/soc): investigations across email, identity,
   Active Directory, network, malware and endpoint; threat hunting with Sigma; Splunk.
   Coursework complete, capstone in progress
-- [TCM Security: Security Operations (SOC) 201](https://tcm-sec.com/academy/security-operations-soc-201/): completed
+- [TCM Security: Security Operations (SOC) 201](https://tcm-sec.com/academy/security-operations-soc-201/):
+  intermediate incident response and threat hunting. Completed
 - Microsoft Sentinel and KQL (30-Day MYDFIR Microsoft SOC Challenge)
 - TryHackMe: more than 60 rooms completed
 
