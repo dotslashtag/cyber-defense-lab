@@ -1,7 +1,7 @@
 """Generate the synthetic sample `op002-style-archives.json`.
 
 A Wazuh archives.json-style export (one JSON object per line) telling a short
-intrusion story modelled on lab operations OP-002/OP-003, mixed with normal
+intrusion story modeled on lab operations OP-002/OP-003, mixed with normal
 activity. It is synthetic: no real hosts, hashes or users beyond the lab's
 fictional names. Run `python make_sample.py` to rebuild it.
 

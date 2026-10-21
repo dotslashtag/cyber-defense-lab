@@ -19,7 +19,7 @@ _TS = re.compile(r"^(\d{4}-\d{2}-\d{2})[T ](\d{2}:\d{2}:\d{2})(\.\d+)?")
 
 
 def iso_utc(value: str | None) -> str | None:
-    """Normalise Windows/Wazuh timestamps to `YYYY-MM-DDTHH:MM:SS[.ffffff]Z`.
+    """Normalize Windows/Wazuh timestamps to `YYYY-MM-DDTHH:MM:SS[.ffffff]Z`.
 
     Windows writes 7 fractional digits; Python's datetime handles 6, so the
     extra digit is dropped.

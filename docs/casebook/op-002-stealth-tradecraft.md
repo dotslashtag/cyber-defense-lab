@@ -21,8 +21,8 @@ detections went silent.** Discovery run with native commands raised nothing, the
 long-running C2 channel raised nothing after its first connection, and **a file
 was successfully exfiltrated with no alert** because its destination was one IP
 away from a listed address. The lesson: the SOC caught *tools and known
-indicators*, not *attacker behaviour*. **Top recommendation:** detections based on
-behaviour, which became OP-004 (D1, D3) and the beaconing backlog item.
+indicators*, not *attacker behavior*. **Top recommendation:** detections based on
+behavior, which became OP-004 (D1, D3) and the beaconing backlog item.
 
 <!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>

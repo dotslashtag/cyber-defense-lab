@@ -25,7 +25,7 @@ Splunk. The workstation also runs the local AI model (Ollama) used for alert tri
 | **ATTACK** | Kali and Caldera adversary systems |
 
 Traffic between zones is **default-deny**. Paths opened for an exercise are
-logged and time-limited, then removed and checked closed afterwards.
+logged and time-limited, then removed and checked closed afterward.
 
 ## Data flow
 
