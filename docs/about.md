@@ -31,8 +31,8 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
 
 ## How I got here
 
-I started on the offensive side, back when Kali Linux was still called BackTrack. Early on
-I completed CBT Nuggets' *White Hat Hacking v10* (Keith Barker), and more recently TCM
+I started on the offensive side, back when Kali Linux was still called BackTrack, teaching
+myself from video tutorials and affordable courses. Early on I completed CBT Nuggets' *White Hat Hacking v10* (Keith Barker), and more recently TCM
 Security's *Practical Ethical Hacking* and LinkedIn Learning's *Become an Ethical Hacker*
 path. Along the way I ran OpenVAS and Nessus scans to find and fix vulnerabilities on my
 own systems.
