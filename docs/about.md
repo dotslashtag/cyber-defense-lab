@@ -58,7 +58,7 @@ and hands-on labs.
 | **Infrastructure security** | [The Lab](lab/index.md): an AD domain behind default-deny segmentation, with every test exception logged and reversed |
 | **Security automation** | [Approval-gated SOAR](lab/soar.md): n8n enrichment and response where a human approves every action; [EVTX Hunter](tools/evtx-hunter.md) with a TheHive webhook |
 | **Investigation** | [Casebook](casebook/index.md): three incident reports with timeline, scope, indicators and response |
-| **Threat hunting** | Severity-first hunts, and the query mistakes I caught before they mis-scored a result ([CASE-OP002 §10](casebook/op-002-stealth-tradecraft.md#10-analyst-notes-three-near-misses-in-my-own-queries)) |
+| **Threat hunting** | Severity-first hunts, and the query mistakes I caught before they mis-scored a result ([CASE-OP002, section 10](casebook/op-002-stealth-tradecraft.md#10-analyst-notes-three-near-misses-in-my-own-queries)) |
 | **Keeping detections working** | [Detection Heartbeat](tools/detection-heartbeat.md): scheduled end-to-end tests that tell a broken rule apart from a silent agent |
 
 **Also hands-on with:**
