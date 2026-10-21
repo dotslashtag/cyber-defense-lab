@@ -47,7 +47,8 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
   Active Directory, network, malware and endpoint; threat hunting with Sigma; Splunk.
   Coursework complete, capstone in progress
 - [TCM Security: Security Operations (SOC) 201](https://tcm-sec.com/academy/security-operations-soc-201/):
-  intermediate incident response and threat hunting. Completed
+  intermediate incident response and threat hunting; investigation methodology, evidence
+  collection at scale, PowerShell for incident response, root cause analysis. Completed
 - Microsoft Sentinel and KQL (30-Day MYDFIR Microsoft SOC Challenge)
 - TryHackMe: more than 60 rooms completed
 
