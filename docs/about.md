@@ -26,8 +26,8 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
   tested, time-boxed and reversed, the same way I handled production changes.
 - **Working across teams.** Security engineers spend much of their time asking IT teams
   to change things. I've been on the other side of that request for a decade.
-- **Explaining risk to managers.** As a manager I had to justify changes in business
-  terms, so I write for the person who has to make the decision.
+- **Explaining risk to managers.** As an IT Infrastructure Manager I had to justify changes
+  in business terms, so I write for the person who has to make the decision.
 
 ## What I can show you
 
@@ -41,7 +41,16 @@ roles, and infrastructure security work (Active Directory, segmentation, hardeni
 | **Threat hunting** | Severity-first hunts, and the query mistakes I caught before they mis-scored a result ([CASE-OP002 §10](casebook/op-002-stealth-tradecraft.md#10-analyst-notes-three-near-misses-in-my-own-queries)) |
 | **Keeping detections working** | [Detection Heartbeat](tools/detection-heartbeat.md): scheduled end-to-end tests that tell a broken rule apart from a silent agent |
 
-**Also hands-on with:** Microsoft Sentinel and KQL (MyDFIR 30-day Sentinel challenge).
+**Also hands-on with:**
+
+- [MyDFIR SOC course](https://academy.mydfir.com/p/soc): investigations across email, identity,
+  Active Directory, network, malware and endpoint; threat hunting with Sigma; Splunk.
+  Coursework complete, capstone in progress
+- [TCM Security: Security Operations (SOC) 201](https://tcm-sec.com/academy/security-operations-soc-201/):
+  intermediate incident response and threat hunting; investigation methodology, evidence
+  collection at scale, PowerShell for incident response, root cause analysis. Completed
+- Microsoft Sentinel and KQL (30-Day MYDFIR Microsoft SOC Challenge)
+- TryHackMe: more than 60 rooms completed
 
 ## How I work with AI
 
