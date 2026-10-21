@@ -110,7 +110,7 @@
 <text x="310" y="818" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">tool downloads and updates</text>
 <text x="60" y="841" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="800" fill="#b91c1c" text-anchor="start">✕</text>
 <text x="84" y="841" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a" text-anchor="start">ATTACK → TARGET / MGMT</text>
-<text x="310" y="841" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">denied; an exercise opens one specific, logged, time-limited path, removed afterwards</text>
+<text x="310" y="841" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">denied; an exercise opens one specific, logged, time-limited path, removed afterward</text>
 <text x="60" y="864" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="15" font-weight="800" fill="#b91c1c" text-anchor="start">✕</text>
 <text x="84" y="864" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="700" fill="#0f172a" text-anchor="start">TARGET → ATTACK</text>
 <text x="310" y="864" font-family="Inter, Segoe UI, Helvetica, Arial, sans-serif" font-size="13" font-weight="400" fill="#334155" text-anchor="start">denied by default</text>

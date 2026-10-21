@@ -99,5 +99,5 @@
 <rect x="16" y="331" width="1140" height="70" rx="8" fill="#1a1030" stroke="#7b52ab"/>
 <text x="30" y="352" font-size="12" font-weight="700" fill="#d9c7ff">Marquee finding — Phase 6 (IOC-list dependence)</text>
 <text x="30" y="369" font-size="10.3" fill="#efe9ff">Exfil identical to PB-019 — only the destination IP changed (non-CDB 10.10.3.5:8083) — yet detection flipped from a guaranteed 510144 L12 to total silence.</text>
-<text x="30" y="384" font-size="10.3" fill="#efe9ff">Detection was bound to the IOC list, not the behaviour. This gap (and the native-discovery miss in Phase 2) is what motivated OP-004.</text>
+<text x="30" y="384" font-size="10.3" fill="#efe9ff">Detection was bound to the IOC list, not the behavior. This gap (and the native-discovery miss in Phase 2) is what motivated OP-004.</text>
 </svg>

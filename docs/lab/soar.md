@@ -165,7 +165,7 @@ under the three main workflows: each follows one example alert through every ste
 - **Blast radius is limited even after approval.** There are two approval paths, and the
   handler re-checks Active Directory live before any change:
     - **Routine:** the account must be a direct member of `SOC-SOAR-Disable-Eligible`.
-    - **Exception:** a separate, explicitly labelled button for one named account outside that
+    - **Exception:** a separate, explicitly labeled button for one named account outside that
       group. The analyst has to choose it on purpose.
 
   Both paths refuse:

@@ -58,7 +58,7 @@ evtx-hunter tree Sysmon.evtx --grep rundll32
 ## Sample
 
 [`samples/op002-style-archives.json`](samples/op002-style-archives.json) is a
-**synthetic** 26-event Wazuh export modelled on lab operations OP-002/OP-003: a
+**synthetic** 26-event Wazuh export modeled on lab operations OP-002/OP-003: a
 native discovery burst, `reg.exe` Run-key persistence, PowerShell with
 ExecutionPolicy Bypass launching rundll32, a blocked Defender change, and a
 workstation-to-workstation logon, mixed with normal activity (OneDrive's own Run

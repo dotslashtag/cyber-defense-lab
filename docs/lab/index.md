@@ -13,7 +13,7 @@ enterprise and the security team that defends it.
   controlled emulation, to detection in both Wazuh and Splunk, to evidence and an
   ATT&CK mapping.
 - **Default deny.** Three internal zones and the WAN uplink, separated by OPNsense. Any test exception is logged,
-  time-limited and removed afterwards.
+  time-limited and removed afterward.
 - **Humans approve response.** Automation enriches and recommends; a signed Slack
   approval is required before any containment action.
 - **Non-destructive emulation.** No credential dumping, no ransomware, and

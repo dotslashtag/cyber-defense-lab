@@ -1,4 +1,4 @@
-"""Run Sigma rules over normalised events and collect findings."""
+"""Run Sigma rules over normalized events and collect findings."""
 
 from __future__ import annotations
 

@@ -40,7 +40,7 @@ own systems.
 Back then, offense was where you could learn hands-on. The affordable courses taught ethical
 hacking, and you could download a deliberately vulnerable machine, attack it, and know
 straight away whether it worked. Free defensive tools existed, such as Snort, OSSEC and
-Security Onion, but practising defense was harder: you needed realistic attacks and logs to
+Security Onion, but practicing defense was harder: you needed realistic attacks and logs to
 look at, nothing told you what you had missed, and blue-team training was mostly expensive.
 
 Learning to attack showed me I'm more interested in defending: catching the attacker,
@@ -91,7 +91,7 @@ can write and defend it on my own. What's next is on the [Roadmap](roadmap.md).
 
 ## Certifications
 
-I passed every certification below through self-study, practising in labs I built myself.
+I passed every certification below through self-study, practicing in labs I built myself.
 
 - ISC2 Certified in Cybersecurity (CC), 2024
 

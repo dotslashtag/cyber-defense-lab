@@ -49,7 +49,7 @@ in Splunk and in the firewall log for the exfiltration phase. Click to zoom.</fi
 - **When:** 2026-09-22 to 09-23
 - **How:** a Caldera "Sandcat" agent driven over HTTP C2, running PowerShell with the
   execution policy bypassed
-- **Why (assessed):** the behaviour of a commodity intruder: survey the host, persist,
+- **Why (assessed):** the behavior of a commodity intruder: survey the host, persist,
   take data out
 
 ## 4. Timeline
@@ -136,7 +136,7 @@ Stages are listed in the order they were run. Outcome key:
 - **An alert isn't the same as a detection.** Stage 1b technically raised an alert,
   but checking the rule's history showed it was mostly false positives, so it was
   scored as a gap, not a success.
-- **This was a guided run**: attack and defence were run together. A blind re-run
+- **This was a guided run**: attack and defense were run together. A blind re-run
   of OP-001, where the analyst investigates cold, is still to do.
 - **Assumed breach:** the agent never beat Defender. Delivery was blocked, and the
   agent was placed through a short, documented exception that was reversed straight after.

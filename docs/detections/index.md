@@ -18,7 +18,7 @@ deployed detection:
 
 | | What happened | Why nothing alerted | The fix |
 |---|---|---|---|
-| **D1** | Attacker ran native discovery (`whoami`, `net`, `nltest`, `systeminfo`...) | Each command is normal on its own; existing rules looked for attacker tools, not behaviour | Alert when **4+ different discovery tools** run on one host within 10 minutes |
+| **D1** | Attacker ran native discovery (`whoami`, `net`, `nltest`, `systeminfo`...) | Each command is normal on its own; existing rules looked for attacker tools, not behavior | Alert when **4+ different discovery tools** run on one host within 10 minutes |
 | **D2** | Attacker hopped from one workstation to another with valid credentials | The lateral-movement rule only watched traffic from the attack network | Alert on any **network or RDP logon between two workstations** |
 | **D3** | A Run-key persistence alert fired on `reg.exe` | The alert title said "script host", which pointed the analyst the wrong way | Renamed the alert to "Run/RunOnce Key Modified", showing the actual writer |
 
@@ -116,7 +116,7 @@ controller, a loopback logon, a console logon and a failed logon must not.
     fills in on Windows events; `510122` (lockout) hung off the logon-*success* rule,
     which lockout events never reach; and `510132` ("successful login after brute
     force") never checked for a successful logon at all. All are fixed and
-    re-validated live (2026-10-12), as is `510133`, which was labelled "lateral
+    re-validated live (2026-10-12), as is `510133`, which was labeled "lateral
     movement" but only counted three failed logons; it is now an honest
     low-severity brute-force early warning. Each finding is written up with its
     fixes in the [detections README](https://github.com/dotslashtag/cyber-defense-lab/blob/main/detections/README.md#wazuh-rule-review).

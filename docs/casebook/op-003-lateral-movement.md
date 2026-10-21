@@ -88,7 +88,7 @@ Only the source network changed, and the alert went from level 14 to nothing.
 
 </div>
 
-**The detection built afterwards (D2, Splunk):**
+**The detection built afterward (D2, Splunk):**
 
 ```spl
 index=wazuh_archives "EventChannel"
