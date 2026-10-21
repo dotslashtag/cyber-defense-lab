@@ -39,8 +39,8 @@ own systems.
 
 Offense was where you could get hands-on back then: the tools were free and easy to try,
 while defensive tools like a SIEM were enterprise products you rarely touched outside work.
-Free tools such as Wazuh, Splunk's free tier and Sigma changed that, and this lab is built
-on them.
+Open-source tools such as Wazuh and Sigma, and free licences and trials from vendors like
+Splunk, changed that, and this lab is built on them.
 
 Learning to attack showed me I'm more interested in defending: catching the attacker,
 closing the gap, and proving the fix works. That's why this lab attacks itself on purpose:
