@@ -17,10 +17,15 @@ CASES = load_cases("wazuh")
 LOCAL_RANGE = range(510100, 510200)
 # Rules outside the detection range on purpose.
 EXTRA_IDS = {"910001": "n8n pipeline test marker, not a detection"}
-
+# Rules whose parent is a decoder (<decoded_as>) instead of a parent rule ID.
+DECODER_PARENT = {
+    "510160": "selects WAF audit JSON with <decoded_as>json</decoded_as>; no stock parent rule exists",
+}
+    
 # Rules with no ATT&CK ID on purpose.
 NO_MITRE = {
     "510144": "an IOC match alone does not prove a technique",
+    "510161": "one failed login is normal; the brute force (510162) carries T1110.001",
     "910001": "pipeline test marker",
 }
 # Rules whose logic cannot be checked offline.
@@ -29,7 +34,9 @@ OFFLINE_UNTESTABLE = {
     "510144": "matches against a Wazuh CDB list on the manager",
     "910001": "pipeline test marker",
     **{rid: _CORRELATION for rid in
-       ("510120", "510121", "510130", "510131", "510132", "510133")},
+       ("510120", "510121", "510130", "510131", "510132", "510133", "510162")},
+    "510160": "<match> on the decoded WAF audit JSON; needs the JSON decoder on a manager",
+    "510161": "<url>/<id> match fields from the web-accesslog decoder; needs a manager",
 }
 
 # A Wazuh rules file may hold several top-level <group> elements, so wrap it
@@ -55,9 +62,12 @@ def test_rule_structure(rule):
     rid = rule.get("id")
     assert rule.findtext("description", "").strip(), f"{rid}: no description"
     if rid not in EXTRA_IDS:
+    if rid not in EXTRA_IDS and rid not in DECODER_PARENT:    
         assert rule.findtext("if_sid") or rule.findtext("if_matched_sid"), (
             f"{rid}: should build on a parent rule (if_sid or if_matched_sid)"
         )
+    if rid in DECODER_PARENT:
+        assert rule.findtext("decoded_as"), f"{rid}: listed as decoder-parented but has no <decoded_as>"
     if rid not in NO_MITRE:
         assert rule.findall("mitre/id"), f"{rid}: no ATT&CK ID"
     if rid not in OFFLINE_UNTESTABLE:
