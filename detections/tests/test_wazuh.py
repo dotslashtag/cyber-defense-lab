@@ -21,7 +21,7 @@ EXTRA_IDS = {"910001": "n8n pipeline test marker, not a detection"}
 DECODER_PARENT = {
     "510160": "selects WAF audit JSON with <decoded_as>json</decoded_as>; no stock parent rule exists",
 }
-    
+
 # Rules with no ATT&CK ID on purpose.
 NO_MITRE = {
     "510144": "an IOC match alone does not prove a technique",
@@ -61,7 +61,6 @@ def test_rule_ids_unique_and_in_local_range():
 def test_rule_structure(rule):
     rid = rule.get("id")
     assert rule.findtext("description", "").strip(), f"{rid}: no description"
-    if rid not in EXTRA_IDS:
     if rid not in EXTRA_IDS and rid not in DECODER_PARENT:    
         assert rule.findtext("if_sid") or rule.findtext("if_matched_sid"), (
             f"{rid}: should build on a parent rule (if_sid or if_matched_sid)"
