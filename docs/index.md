@@ -126,5 +126,5 @@ enrichment, a TheHive case and a signed Slack approval before any response.
 
 [Architecture and data flow](lab/architecture.md){ .md-button }
 
-**Stack:** Wazuh 4.14 · Splunk 10.4 · Sysmon · OPNsense + Suricata · n8n · TheHive 5 ·
+**Stack:** Wazuh 4.14 · Splunk 10.4 · Sysmon · OPNsense + Suricata · ModSecurity + OWASP CRS · n8n · TheHive 5 ·
 MISP 2.5 · MITRE Caldera 5.3 · Kali · Active Directory · Windows 10/11 · Ubuntu
