@@ -1,0 +1,10 @@
+positive:
+  - description: OP-005b W5 failed login on Juice Shop (POST /rest/user/login, 401)
+    event: {c-ip: '10.10.3.3', cs-method: POST, cs-uri-stem: '/rest/user/login', sc-status: 401}
+negative:
+  - description: Successful login (200)
+    event: {c-ip: '10.10.1.5', cs-method: POST, cs-uri-stem: '/rest/user/login', sc-status: 200}
+  - description: 401 on a different API path is not a login failure
+    event: {c-ip: '10.10.3.3', cs-method: GET, cs-uri-stem: '/rest/user/whoami', sc-status: 401}
+  - description: Loading the login page (GET) is not a login attempt
+    event: {c-ip: '10.10.3.3', cs-method: GET, cs-uri-stem: '/rest/user/login', sc-status: 401}

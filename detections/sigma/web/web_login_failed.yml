@@ -1,0 +1,26 @@
+title: Web Application Failed Login
+id: b0c70a96-bb4f-48f1-bd27-05c72781378f
+name: web_login_failed
+status: test
+description: |
+  A login request to the web application was rejected (HTTP 401 on a POST to the
+  login endpoint). Normal on its own; it is the base rule for the correlation
+  "Web Application Login Brute Force" (OP-005b W5). The path below is OWASP Juice
+  Shop's (WEB01); set it to your application's login endpoint. Sigma version of lab
+  Wazuh rule 510161.
+author: dotslashtag
+date: 2026-11-14
+tags:
+  - attack.credential-access
+  - attack.t1110.001
+logsource:
+  category: webserver
+detection:
+  selection:
+    cs-method: POST
+    cs-uri-stem: '/rest/user/login'
+    sc-status: 401
+  condition: selection
+falsepositives:
+  - Users mistyping their password
+level: informational

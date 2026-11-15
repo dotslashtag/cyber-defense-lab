@@ -1,0 +1,28 @@
+title: Web Application Login Brute Force
+id: f49a1254-7d30-430e-8591-6311a33cbd57
+status: test
+description: |
+  Eight or more failed logins from one client IP within two minutes. A single
+  failed login is normal; the pattern from one source is the attack. Grouped per
+  source, so a second attacker raises their own alert. Built in OP-005b (W5) after a
+  hydra-style burst against OWASP Juice Shop on WEB01. Sigma version of lab Wazuh rule
+  510162 (frequency 8, timeframe 120 s, same_source_ip). The threshold of 8 gives one
+  alert per 10-attempt burst; alert dedup per incident belongs in the SOAR layer.
+author: dotslashtag
+date: 2026-11-14
+tags:
+  - attack.credential-access
+  - attack.t1110.001
+correlation:
+  type: event_count
+  rules:
+    - web_login_failed
+  group-by:
+    - c-ip
+  timespan: 2m
+  condition:
+    gte: 8
+falsepositives:
+  - A user or script retrying with a stale password (raises a burst from one IP)
+  - Many users behind one NAT or proxy IP failing at once
+level: high
