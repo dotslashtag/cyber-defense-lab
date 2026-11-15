@@ -64,10 +64,12 @@ minutes. See [Results](../operations/results.md).
 
 ## Web attacks: from an IOC list to behavior (OP-005b)
 
-OP-005b attacked a deliberately vulnerable web app (OWASP Juice Shop) behind a
-ModSecurity WAF running the OWASP Core Rule Set. The web attacks **did** alert, but only
-through an IOC-gated rule: the source IP had to be on a known-bad list. A new attacker
-would have gone unseen. Two new detections close that gap:
+OP-005 attacked a deliberately vulnerable web app (OWASP Juice Shop) behind a
+ModSecurity WAF running the OWASP Core Rule Set. Network signatures alerted on the
+scanning and the XSS, and an IOC-gated rule fired because the attacker's IP was on a
+known-bad list. But **the WAF's own verdicts never raised an alert**: the SQL injection
+that reached the database read only as a generic "server error". OP-005b built two
+detections to close that gap:
 
 | | Detects | How |
 |---|---|---|
@@ -76,8 +78,9 @@ would have gone unseen. Two new detections close that gap:
 
 **The test that matters for W1:** the same attack was run twice, once with the
 attacker's IP on the IOC list and once with it removed. On the list, both the old rule
-and W1 fired. Off the list, **only W1 fired**: the behavior layer caught the attacker
-the IOC layer missed.
+and W1 fired. Off the list, **W1 fired and the IOC rule stayed silent**: the behavior
+layer caught the attacker the IOC layer missed. And the SQL injection from OP-005, sent
+again with W1 live, now raises a level-10 alert where it used to be logged-only.
 
 <!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
