@@ -160,9 +160,11 @@ caught it before deployment. v2 folds any run of backslashes to `/` before match
 
 ## W1 and W5: web attacks on WEB01 (OP-005b, 2026-11-13)
 
-OP-005b attacked OWASP Juice Shop behind ModSecurity + OWASP CRS (DetectionOnly) on
-WEB01. Web attacks alerted only through the IOC-gated rule `99906`: known-bad source IP,
-attack pattern in the access log, **and** HTTP 200. A new attacker IP raised nothing.
+OP-005 attacked OWASP Juice Shop behind ModSecurity + OWASP CRS (DetectionOnly) on
+WEB01. Suricata alerted on scanning and XSS by signature, and the IOC-gated rule `99906`
+(known-bad source IP + attack pattern in the access log + HTTP 200) fired on the XSS. But
+no alert ever used the **WAF's own verdict**: the SQL injection that reached the database
+(app 500) raised only the generic `31122` "server error" (L5). OP-005b built W1 and W5.
 
 - **W1 `510160`** alerts on the WAF's own verdict, CRS `949110` *Inbound Anomaly Score
   Exceeded*, for any source IP and any response code. It matches the literal
@@ -179,6 +181,7 @@ attack pattern in the access log, **and** HTTP 200. A new attacker IP raised not
 | W1 `wazuh-logtest`, attack event (949110) / benign event (920350 only) | `510160` L10 / stays at `1002` |
 | W1 live XSS from Kali **on** the IOC list | `510160` **and** `99906` |
 | W1 same attack with Kali **removed** from the list | `510160` fires, `99906` silent |
+| W1 OP-005's SQL injection (app 500) sent again, 2026-11-15 | `510160` L10 + generic `31122`; on 2026-11-11 only `31122` |
 | W5 one failed login (`wazuh-logtest`) | `510161` L3 |
 | W5 10 failures in a burst / 3 failures | one `510162` / none |
 
