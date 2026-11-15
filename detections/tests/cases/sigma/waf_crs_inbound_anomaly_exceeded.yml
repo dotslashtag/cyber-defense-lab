@@ -1,0 +1,32 @@
+positive:
+  - description: OP-005b W1 live XSS from Kali (W1-live-test), anomaly verdict message
+    event:
+      ruleId: '949110'
+      message: 'Inbound Anomaly Score Exceeded'
+      client_ip: '10.10.3.3'
+      uri: '/rest/products/search'
+  - description: OP-005b W1 off-list run (W1-offlist-test), source not on any IOC list
+    event:
+      ruleId: '949110'
+      message: 'Inbound Anomaly Score Exceeded'
+      client_ip: '10.10.3.3'
+      uri: '/rest/products/search'
+negative:
+  - description: Benign request scored only by 920350 (numeric IP in Host header, +3, below threshold)
+    event:
+      ruleId: '920350'
+      message: 'Host header is a numeric IP address'
+      client_ip: '10.10.1.5'
+      uri: '/'
+  - description: A single contributing SQLi rule match is a component of the score, not the verdict
+    event:
+      ruleId: '942100'
+      message: 'SQL Injection Attack Detected via libinjection'
+      client_ip: '10.10.3.3'
+      uri: '/rest/products/search'
+  - description: Outbound anomaly verdict (959100) is a response-side rule, not this detection
+    event:
+      ruleId: '959100'
+      message: 'Outbound Anomaly Score Exceeded'
+      client_ip: '10.10.2.10'
+      uri: '/'

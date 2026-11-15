@@ -62,6 +62,59 @@ Each was validated **both ways** in the lab before being enabled:
 A **blind re-run** on 2026-09-30 then caught both D1 and D2 cold, in about 5 and 6
 minutes. See [Results](../operations/results.md).
 
+## Web attacks: from an IOC list to behavior (OP-005b)
+
+OP-005b attacked a deliberately vulnerable web app (OWASP Juice Shop) behind a
+ModSecurity WAF running the OWASP Core Rule Set. The web attacks **did** alert, but only
+through an IOC-gated rule: the source IP had to be on a known-bad list. A new attacker
+would have gone unseen. Two new detections close that gap:
+
+| | Detects | How |
+|---|---|---|
+| **W1** | Any request the WAF scores as an attack | Alert on CRS rule **949110** (*Inbound Anomaly Score Exceeded*): the WAF's own verdict that a request's anomaly score crossed the threshold. No signature per attack, no IP list |
+| **W5** | Login brute force | One failed login is normal; **8 failures from one IP within 2 minutes** is the attack. Grouped per source, so a second attacker gets their own alert |
+
+**The test that matters for W1:** the same attack was run twice, once with the
+attacker's IP on the IOC list and once with it removed. On the list, both the old rule
+and W1 fired. Off the list, **only W1 fired**: the behavior layer caught the attacker
+the IOC layer missed.
+
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
+<div class="grid" markdown>
+
+<figure markdown>
+![W1 rule 510160 firing in wazuh-logtest](../assets/shots/op005b-w1-logtest-fires.png)
+<figcaption>W1 (<code>510160</code>) fires on the attack event in <code>wazuh-logtest</code>: level 10, T1190.</figcaption>
+</figure>
+
+<figure markdown>
+![W1 fires with the attacker off the IOC list](../assets/shots/op005b-w1-offlist-fires.png)
+<figcaption>Attacker removed from the IOC list: W1 fires, the IOC-gated rule stays silent.</figcaption>
+</figure>
+
+</div>
+
+<!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
+<div class="grid" markdown>
+
+<figure markdown>
+![W5: one brute-force alert over nine failed-login events](../assets/shots/op005b-w5-one-alert.png)
+<figcaption>W5: a 10-attempt burst gives <b>one</b> level-10 brute-force alert over the level-3 failed logins.</figcaption>
+</figure>
+
+<figure markdown>
+![W5 stays quiet on three failures](../assets/shots/op005b-w5-negative-quiet.png)
+<figcaption>Three failures: only the failed-login events, no brute-force alert.</figcaption>
+</figure>
+
+</div>
+
+**Tuning W5 for production, not for the demo.** The first version alerted twice per
+burst. Suppressing repeats with a global `ignore` would have also hidden a *second*
+attacker during the quiet period, so the threshold was raised instead (one alert per
+burst, still per source), and grouping alerts into one incident is left to the SOAR
+layer, where it belongs.
+
 ## Inventory
 
 | Detection | ATT&CK | Formats | Origin |
@@ -75,6 +128,8 @@ minutes. See [Results](../operations/results.md).
 | Rundll32 spawned by PowerShell | T1218.011 | Wazuh `510143` · Sigma | PB-009 |
 | Connection to a controlled IOC IP | (none on purpose) | Wazuh `510144` | PB-010 · PB-017 · PB-019 |
 | Brute force, password spray, lockout, success-after-brute-force | T1110.001 · T1110.003 · T1078 | Wazuh `510120`–`510122`, `510130`–`510133` | PB-001 · PB-002 |
+| WAF inbound anomaly score exceeded (W1) | T1190 | Wazuh `510160` · Sigma | OP-005b |
+| Web login brute force, per source IP (W5) | T1110.001 | Wazuh `510161`–`510162` · Sigma correlation | OP-005b |
 
 ## Example: D2 in Sigma
 

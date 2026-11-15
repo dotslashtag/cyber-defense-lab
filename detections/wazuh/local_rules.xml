@@ -189,3 +189,46 @@
     <group>persistence,registry_run_key,scripthost,</group>
   </rule>
 </group>
+
+<group name="web,waf,modsecurity,">
+  <!-- OP-005b W1: WAF anomaly verdict -> alert. ModSecurity + OWASP CRS on WEB01
+       (DetectionOnly) writes a JSON audit log; CRS rule 949110 "Inbound Anomaly Score
+       Exceeded" means the request crossed the anomaly threshold (5 at paranoia
+       level 1). Behavior-based: fires for ANY source IP and ANY response code, unlike
+       the IOC-gated 99906 (known-bad IP + HTTP 200). <match> on the literal string,
+       not <field>: Wazuh flattens the nested transaction.messages[] array
+       unpredictably, so a guessed field path would be fragile. Parent selector is
+       the JSON decoder (decoded_as), not an if_sid. -->
+  <rule id="510160" level="10">
+    <decoded_as>json</decoded_as>
+    <match>"ruleId":"949110"</match>
+    <description>WAF: CRS inbound anomaly score exceeded - web attack detected (W1)</description>
+    <mitre><id>T1190</id></mitre>
+    <group>waf,waf_anomaly,attack,</group>
+  </rule>
+</group>
+
+<group name="web,waf,authentication,">
+  <!-- W5 base: one failed login on WEB01 (narrows the generic 31101 to the login path + 401) -->
+  <rule id="510161" level="3">
+    <if_sid>31101</if_sid>
+    <url>/rest/user/login</url>
+    <id>^401</id>
+    <description>WEB01: failed login attempt from $(srcip)</description>
+    <group>authentication_failed,</group>
+  </rule>
+
+  <!-- W5: brute force = many of the above from ONE source IP in a short window.
+       frequency=8 in 120 s gives one alert per 10-attempt burst per source;
+       incident-level dedup is the SOAR layer's job (Redis), not a global ignore,
+       which would blind the rule to a second attacker. -->
+  <rule id="510162" level="10" frequency="8" timeframe="120">
+    <if_matched_sid>510161</if_matched_sid>
+    <same_source_ip />
+    <description>WEB01: possible login brute force from $(srcip) (repeated failed logins)</description>
+    <mitre>
+      <id>T1110.001</id>
+    </mitre>
+    <group>authentication_failures,brute_force,</group>
+  </rule>
+</group>

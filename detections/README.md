@@ -9,6 +9,7 @@ and benign samples it **must stay quiet on**. CI runs them on every push.
 ```text
 detections/
 ├── sigma/windows/          Portable Sigma rules (convert to any SIEM)
+├── sigma/waf/, sigma/web/  Sigma rules for WAF and web-server logs
 ├── wazuh/local_rules.xml   The custom Wazuh rules deployed in the lab (510100-510199)
 ├── splunk/                 Deployed Splunk correlation searches + savedsearches.conf
 └── tests/
@@ -36,6 +37,8 @@ detections/
 | Successful logon after brute force | T1110.001, T1078 | `510132` | | | PB-001 |
 | Repeated failed logons, early warning | T1110 | `510133` | | | PB-002 |
 | AD account lockout (4740, user accounts only) | T1110 | `510122` | | | PB-001/002 |
+| WAF CRS inbound anomaly score exceeded (**W1**) | T1190 | `510160` | | ✅ | OP-005b |
+| Web login brute force, per source IP (**W5**) | T1110.001 | `510161`, `510162` | | ✅ (correlation) | OP-005b |
 
 ## Run the tests
 
@@ -60,8 +63,9 @@ sigma convert -t splunk detections/sigma/windows/proc_creation_rundll32_spawned_
 - **Wazuh:** rule IDs, structure and ATT&CK tags are checked, and each rule's own
   field patterns are run against sample alerts. The parent rule (`if_sid`) and the
   decoder are not run here; that needs a live test on a Wazuh manager. The
-  IOC-list rule `510144` and the frequency/correlation rules (`510120`–`510121`,
-  `510130`–`510133`) can only be tested on the manager. `910001` is an n8n
+  IOC-list rule `510144`, the frequency/correlation rules (`510120`–`510121`,
+  `510130`–`510133`, `510162`) and the decoder-dependent web rules (`510160`,
+  `510161`) can only be tested on the manager; their Sigma versions carry the CI tests. `910001` is an n8n
   pipeline test marker, not a detection.
 - **Splunk:** the `.spl` files are the searches deployed in the lab, validated
   there against live data (see OP-004). They are not executed in CI.
@@ -153,6 +157,42 @@ archive data it missed **all 12** real events: Wazuh double-escapes eventchannel
 so the decoded paths contain `\\` between parts. The side-by-side comparison against v1
 caught it before deployment. v2 folds any run of backslashes to `/` before matching.
 (EVTX Hunter already undoes the doubling when it reads Wazuh archives.)
+
+## W1 and W5: web attacks on WEB01 (OP-005b, 2026-11-13)
+
+OP-005b attacked OWASP Juice Shop behind ModSecurity + OWASP CRS (DetectionOnly) on
+WEB01. Web attacks alerted only through the IOC-gated rule `99906`: known-bad source IP,
+attack pattern in the access log, **and** HTTP 200. A new attacker IP raised nothing.
+
+- **W1 `510160`** alerts on the WAF's own verdict, CRS `949110` *Inbound Anomaly Score
+  Exceeded*, for any source IP and any response code. It matches the literal
+  `"ruleId":"949110"` in the decoded audit JSON (`<match>`, not `<field>`): Wazuh
+  flattens `transaction.messages[]` unpredictably, so a guessed field path would be
+  fragile. Its parent selector is `<decoded_as>json</decoded_as>`, so `test_wazuh.py`
+  lists it in `DECODER_PARENT` (and checks the `<decoded_as>` is really there).
+- **W5 `510161` + `510162`**: `510161` (level 3) marks one failed login
+  (`POST /rest/user/login` → 401, parent `31101`); `510162` (level 10) fires on 8 of
+  them from one source IP within 120 s.
+
+| Check (live, on the manager) | Result |
+|---|---|
+| W1 `wazuh-logtest`, attack event (949110) / benign event (920350 only) | `510160` L10 / stays at `1002` |
+| W1 live XSS from Kali **on** the IOC list | `510160` **and** `99906` |
+| W1 same attack with Kali **removed** from the list | `510160` fires, `99906` silent |
+| W5 one failed login (`wazuh-logtest`) | `510161` L3 |
+| W5 10 failures in a burst / 3 failures | one `510162` / none |
+
+**Tuning W5.** With `frequency="5"` a 10-attempt burst raised `510162` twice. A global
+`ignore` would have stopped the repeat, but it also silences the rule for a *second*
+attacker during the ignore window. The threshold went to 8 instead (one alert per
+10-attempt burst, still per source), and alert dedup per incident stays in the SOAR
+layer (Redis idempotency).
+
+**Lesson: a pasted log line can be cut short.** The first W1 logtest returned `1002` with
+the rule loaded. The ~8 KB audit event had been pasted into an interactive terminal, which
+cuts input lines at ~4096 bytes, and `949110` sits near the end. Feeding the event from a
+file (`wazuh-logtest < event.json`) fixed it, and the "before the rule" baseline was
+re-run the same way so both runs saw the same input.
 
 ## Adding a detection
 
