@@ -1,0 +1,33 @@
+title: WAF OWASP CRS Inbound Anomaly Score Exceeded
+id: 6c208369-f138-49d0-aa57-d1c7e8b1b523
+status: test
+description: |
+  ModSecurity with the OWASP Core Rule Set scored a request at or above the inbound
+  anomaly threshold (CRS rule 949110). Each CRS rule that matches adds points
+  (critical 5, error 4, warning 3, notice 2); 949110 is the verdict that the total
+  crossed the threshold (5 at paranoia level 1), so it fires on SQL injection, XSS,
+  path traversal and similar attacks without needing a signature per attack or a
+  known-bad source IP. Built after OP-005b, where web attacks on WEB01 alerted only
+  when the source IP was already on an IOC list. Sigma version of lab Wazuh rule
+  510160 (W1). One event per matched CRS rule message (ModSecurity JSON audit log,
+  transaction.messages[] flattened); map ruleId to your WAF's rule-ID field.
+references:
+  - https://coreruleset.org/docs/concepts/anomaly_scoring/
+author: dotslashtag
+date: 2026-11-14
+tags:
+  - attack.initial-access
+  - attack.t1190
+logsource:
+  category: waf
+  product: modsecurity
+detection:
+  selection:
+    ruleId: '949110'
+  condition: selection
+falsepositives:
+  - Applications that legitimately send SQL- or script-like input (search boxes,
+    code editors, rich-text fields); tune with CRS exclusions, not by raising the
+    threshold
+  - Higher paranoia levels add noise; validate at the level you deploy
+level: high
