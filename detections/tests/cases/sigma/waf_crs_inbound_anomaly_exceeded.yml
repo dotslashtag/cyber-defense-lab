@@ -8,7 +8,7 @@ positive:
   - description: OP-005b W1 off-list run (W1-offlist-test), source not on any IOC list
     event:
       ruleId: '949110'
-      message: 'Inbound Anomaly Score Exceeded (Total Score: 10)'
+      message: 'Inbound Anomaly Score Exceeded'
       client_ip: '10.10.3.3'
       uri: '/rest/products/search'
 negative:
