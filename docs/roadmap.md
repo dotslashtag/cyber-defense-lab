@@ -10,6 +10,8 @@
 | 2 | Detection-as-code: Wazuh XML, Splunk SPL, Sigma, CI tests | ✅ |
 | 3 | Casebook: OP-001 to OP-003 incident reports | ✅ |
 | 4 | EVTX Hunter | ✅ |
+| 5 | Detection Heartbeat (scheduled end-to-end probes) and approval-gated SOAR | ✅ |
+| 6 | OP-005 web application attack: WAF on WEB01, detections W1 and W5, public topology | ✅ |
 
 ## Next
 
@@ -20,3 +22,5 @@ Finishing and defending what is here comes before adding anything new.
 | Publish the OP-004 blind re-run as a case | The strongest result in the lab, written up with the one miss shown |
 | D4: collection and staging detection | The one technique the blind re-run did not catch |
 | Beaconing and IOC-independent egress detection | The remaining amber rows in the coverage map |
+| 7-day false-positive baselines for W1 and W5 | Prove the new web detections stay quiet on normal traffic |
+| W4 scan volume per source; W6 "did the attack work?" | Scanning was caught only by known-filename signatures; a successful attack should stand out from a blocked one |

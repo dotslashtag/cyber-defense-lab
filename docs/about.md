@@ -54,7 +54,7 @@ and hands-on labs.
 | Skill | Where to see it |
 |---|---|
 | **Detection engineering** | [Detections](detections/index.md): Sigma, Wazuh and Splunk rules built from real misses, tested both ways in CI |
-| **Purple teaming** | [Operations](operations/index.md) and [Results](operations/results.md): four scored operations and a blind re-run that caught 4 of 5 techniques cold |
+| **Purple teaming** | [Operations](operations/index.md) and [Results](operations/results.md): five scored operations and a blind re-run that caught 4 of 5 techniques cold |
 | **Infrastructure security** | [The Lab](lab/index.md): an AD domain behind default-deny segmentation, with every test exception logged and reversed |
 | **Security automation** | [Approval-gated SOAR](lab/soar.md): n8n enrichment and response where a human approves every action; [EVTX Hunter](tools/evtx-hunter.md) with a TheHive webhook |
 | **Investigation** | [Casebook](casebook/index.md): three incident reports with timeline, scope, indicators and response |

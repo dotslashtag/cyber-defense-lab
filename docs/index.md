@@ -26,10 +26,10 @@ A home SOC built like a small enterprise: an Active Directory domain behind OPNs
 
 <!-- STAT TILES -->
 <div class="cdl-stats" markdown>
-<div class="cdl-stat"><div class="n">4</div><div class="l">scored purple-team operations across 9 ATT&CK tactics</div></div>
-<div class="cdl-stat"><div class="n">17</div><div class="l">ATT&CK techniques exercised end to end</div></div>
+<div class="cdl-stat"><div class="n">5</div><div class="l">scored purple-team operations across 12 ATT&CK tactics</div></div>
+<div class="cdl-stat"><div class="n">20</div><div class="l">ATT&CK techniques exercised end to end</div></div>
 <div class="cdl-stat"><div class="n">4 / 5</div><div class="l">techniques found cold in the blind re-run, decoy ignored</div></div>
-<div class="cdl-stat"><div class="n">123</div><div class="l">automated tests on the detections and tools, run in CI</div></div>
+<div class="cdl-stat"><div class="n">155</div><div class="l">automated tests on the detections and tools, run in CI</div></div>
 <div class="cdl-stat"><div class="n">0</div><div class="l">automatic containment actions: every response waits for a human</div></div>
 </div>
 
@@ -68,12 +68,19 @@ Built D2: logons between peer workstations. Caught cold in ~6 min.
 
 Found why Wazuh was silent; wrote rule `510150`. Caught in seconds.
 </div>
+<div markdown>
+**SQL injection that reached the database** · OP-005
+
+<span class="cdl-pill logged">Logged-only</span> → <span class="cdl-pill alerted">Alerted</span>
+
+Built W1: alert on the WAF's own verdict. Same request retested: now level 10.
+</div>
 </div>
 
 <figure class="cdl-wide" markdown>
-![ATT&CK coverage heatmap: outcome per technique across OP-001 to OP-004](assets/img/attack-coverage.svg)
-<figcaption>ATT&CK coverage after OP-001 to OP-004. Purple = a miss that OP-004 turned
-into a working detection; amber = still logged-only, on the backlog.</figcaption>
+![ATT&CK coverage heatmap: outcome per technique across OP-001 to OP-005](assets/img/attack-coverage.svg)
+<figcaption>ATT&CK coverage after OP-001 to OP-005. Purple = a miss turned into a working
+detection (OP-004, OP-005); amber = still logged-only, on the backlog.</figcaption>
 </figure>
 
 ## Explore
@@ -84,8 +91,8 @@ into a working detection; amber = still logged-only, on the backlog.</figcaption
 
     ---
 
-    Four assumed-breach operations scored Prevented / Alerted / Logged-only /
-    Missed, then a blind re-run to prove the fixes.
+    Five operations, from assumed breach to a web attack from outside, scored
+    Prevented / Alerted / Logged-only / Missed, then a blind re-run to prove the fixes.
 
     [:octicons-arrow-right-24: Results](operations/results.md)
 

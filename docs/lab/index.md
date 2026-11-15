@@ -35,3 +35,14 @@ enterprise and the security team that defends it.
 | Endpoints | Windows 10, Windows 11, Ubuntu 24.04, WEB01 (Ubuntu + Docker web app) |
 
 See [Architecture](architecture.md) for zones and data flow.
+
+## Production at home, and this lab
+
+My home network runs like production: segmented VLANs and a DMZ behind OPNsense, no open
+inbound ports (public traffic arrives through an outbound Cloudflare Tunnel), and monitoring
+that alerts on failures. My household depends on it, so I never attack it.
+
+This lab is the opposite: an isolated range where I attack my own Active Directory domain,
+break things on purpose, and turn what I miss into tested detections.
+
+[:material-home-variant: Home production network](https://dotslashtag.online/){ .md-button }

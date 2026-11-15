@@ -16,6 +16,7 @@ Each phase of each operation was scored by its best outcome.
 | [OP-001](../casebook/op-001-commodity-intrusion.md) Commodity intrusion | 1 | 5 | 1 | 0 | Loud attacker: mostly caught, but the malware launch was buried in a noisy rule |
 | [OP-002](../casebook/op-002-stealth-tradecraft.md) Quiet variant | 1 | 5 (1 buried) | 1 | **3** | Same attack done quietly: native discovery, sustained C2 and exfiltration slipped through |
 | [OP-003](../casebook/op-003-lateral-movement.md) Lateral movement | 2 | 0 | 0 | **1** | The hop between workstations was invisible, but execution on the target was blocked |
+| OP-005 Web application attack | 1 | 3 | 2 | 0 | Signatures caught recon, scanning and XSS, and nginx blocked traversal, but the WAF's own verdicts never alerted: SQL injection that reached the database and a login burst were logged-only |
 
 <!-- LAYOUT: full-width image. Keep the <figure> lines; edit the image path ( ) or the caption text -->
 <figure class="cdl-wide" markdown>
@@ -24,13 +25,15 @@ Each phase of each operation was scored by its best outcome.
 for a quiet one. Detection turned out to depend on known tools and IOCs, not on intent.</figcaption>
 </figure>
 
-## 2. The fixes (OP-004)
+## 2. The fixes (OP-004, OP-005)
 
 | Gap | Detection built | Validated before enabling |
 |---|---|---|
 | Native discovery invisible (OP-002) | **D1** · 4+ discovery tools on one host in 10 min | Fired at 8 tools on a replayed burst; busiest normal window on any host = 1 |
 | Workstation → workstation hop invisible (OP-003) | **D2** · network/RDP logon between peer workstations | Caught the OP-003 hop; of 8,864 logons in 7 days, the only match |
 | Run-key alert misnamed "script host" (OP-002) | **D3** · renamed "Run/RunOnce Key Modified", shows the real writer | Logic unchanged; original kept disabled for rollback |
+| WAF verdicts never alerted; SQL injection that reached the database read as a generic server error (OP-005) | **W1** · the WAF's anomaly verdict (CRS 949110), any source IP | Fired in `wazuh-logtest`, quiet on a benign request; with the attacker removed from the IOC list, W1 fired and the IOC rule stayed silent; **the original SQLi, retested: logged-only → level 10 alert** |
+| Login burst raised no brute-force alert (OP-005) | **W5** · 8 failed logins from one IP within 2 minutes | One alert per 10-attempt burst; 3 failures stay quiet |
 
 <!-- LAYOUT: image grid (side by side). Keep this line and the matching </div> below; edit the images and captions inside -->
 <div class="grid" markdown>
