@@ -2,7 +2,7 @@ positive:
   - description: OP-005b W1 live XSS from Kali (W1-live-test), anomaly verdict message
     event:
       ruleId: '949110'
-      message: 'Inbound Anomaly Score Exceeded (Total Score: 8)'
+      message: 'Inbound Anomaly Score Exceeded'
       client_ip: '10.10.3.3'
       uri: '/rest/products/search'
   - description: OP-005b W1 off-list run (W1-offlist-test), source not on any IOC list
